@@ -1,0 +1,2 @@
+An attempt of a (hopefully) flexible, efficient and well-written implementation of a Equity derivative pricer.
+Currently, the pricing engine supports only MonteCarlo simulations and the Asian Option payoff.
