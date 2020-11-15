@@ -1,4 +1,14 @@
-*.pdf
+build/
+
+#CMake files
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+
 *.o
 *.exe
 *.lib
+
+*.pdf
+*.xlsx
