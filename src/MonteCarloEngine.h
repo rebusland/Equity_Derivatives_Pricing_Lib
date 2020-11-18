@@ -2,7 +2,6 @@
 #define _MONTECARLO_ENGINE_H_
 
 #include <functional>
-#include <list>
 
 #include "MonteCarloSettings.h"
 #include "Payoff.h"
@@ -29,7 +28,7 @@ using _SdeFunction = std::function<double (double, double)>;
 class MonteCarloEngine {
 	public:
 		MonteCarloEngine(
-			MonteCarloSettings* mcSettings,
+			const MonteCarloSettings& mcSettings,
 			_SdeFunction sdeFunc,
 			const _Date& startDate,
 			const _Date& endDate,
@@ -37,6 +36,9 @@ class MonteCarloEngine {
 			Payoff& payoff
 		);
 
+		double EvaluatePayoff();
+
+	private:
 		/**
 		 * Generate the Monte Carlo path and returns the whole path.
 		 * This overload is useful when the instrument to be priced requires the whole path (or it is extremely path-dependent).
@@ -127,7 +129,7 @@ class MonteCarloEngine {
 		double RunSimulation();
 
 	private:
-		MonteCarloSettings* m_montecarlo_settings;
+		const MonteCarloSettings& m_montecarlo_settings;
 		_SdeFunction m_sde_function;
 		_Date m_start_date;
 		_Date m_end_date;

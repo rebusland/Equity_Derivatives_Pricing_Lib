@@ -7,7 +7,6 @@
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
 #include "AsianPayoff.h"
-#include "Utils.h"
 
 using _Date = int;
 
@@ -38,13 +37,15 @@ int main() {
 	double vola = 0.009; // this corresponds to annual volatility of 14% ca.
 	GeometricBrownianMotion GBMSde{r, vola};
 
-	const int N_MC_SIMULATIONS = 1000;
-	
-	MonteCarloSettings mcSettings{};
+	MonteCarloSettings mcSettings{
+		SimulationScheduler::SEQUENTIAL,
+		VarianceReduction::NONE,
+		1000 // number of simulations
+	};
 	AsianPayoff asianPayoff{asianOption};
 
 	MonteCarloEngine mcEngine{
-		&mcSettings,
+		mcSettings,
 		GBMSde,
 		asianOption.m_start_date,
 		asianOption.m_expiry_date,
@@ -52,18 +53,7 @@ int main() {
 		asianPayoff
 	};
 
-	Utils::RollingAverage rollingAvgMonteCarlo{0.0, AvgType::ARITHMETIC};
+	double finalPrice = mcEngine.EvaluatePayoff();
 
-	// this section (for loop) will be moved inside MCEngine and calculation will take into
-	// account the MC settings (i.e. multithreaded, antithetic variate etc.)
-	double simulationPrice;
-	for (int i = 0; i < N_MC_SIMULATIONS; i++) {
-		// price estimeted in the current scenario
-		simulationPrice = mcEngine.RunSimulation();
-		std::cout << "Simulation " << i << " price: " << simulationPrice << "\n";
-		rollingAvgMonteCarlo.AddValue(simulationPrice);
-	}
-
-	double finalPrice = rollingAvgMonteCarlo.GetAverage();
 	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
 }

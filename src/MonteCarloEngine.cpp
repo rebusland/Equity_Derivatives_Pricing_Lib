@@ -3,9 +3,15 @@
 #include <iostream>
 
 #include "PathObserver.h"
+#include "Utils.h"
 
+/**
+ * TODO
+ *  - Add handling of VarianceReduction and SimulationScheduler
+ *
+ */
 MonteCarloEngine::MonteCarloEngine(
-			MonteCarloSettings* mcSettings,
+			const MonteCarloSettings& mcSettings,
 			_SdeFunction sdeFunc,
 			const _Date& startDate,
 			const _Date& endDate,
@@ -13,6 +19,22 @@ MonteCarloEngine::MonteCarloEngine(
 			Payoff& payoff
 		) : m_montecarlo_settings{mcSettings}, m_sde_function{sdeFunc}, m_start_date{startDate},
 		m_end_date{endDate}, m_S0{S0}, m_payoff{payoff} {};
+
+double MonteCarloEngine::EvaluatePayoff() {
+	Utils::RollingAverage rollingAvgMonteCarlo{0.0, AvgType::ARITHMETIC};
+
+	const int N_SIMUL = m_montecarlo_settings.m_num_simulations;
+	double simulationPrice;
+	for (int i = 0; i < N_SIMUL; i++) {
+		// price estimeted in the current scenario
+		simulationPrice = RunSimulation();
+		std::cout << "Simulation " << i << " price: " << simulationPrice << "\n";
+		rollingAvgMonteCarlo.AddValue(simulationPrice);
+	}
+
+	return rollingAvgMonteCarlo.GetAverage();
+
+}
 
 double MonteCarloEngine::RunSimulation() {
 	// IMPORTANT, we now assume a time step of a single day
