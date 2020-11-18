@@ -20,6 +20,7 @@ int main() {
 
 	Underlying underlying{"BASE", 10.0, 0.0};
 	_Date startDate = 0;
+	_Date optionIssueDate = 0; // we assume the evaluationDate equals the issue date of the option
 	_Date expiryDate = 100;
 	std::vector<_Date> strikeFixingDates = {2, 3, 5, 6};
 	std::vector<_Date> priceFixingDates = {91, 92, 95, 96, 97, 98};
@@ -28,7 +29,7 @@ int main() {
 	AvgType avgTypePrice{AvgType::ARITHMETIC};
 
 	AsianOption asianOption{
-		underlying, startDate, expiryDate,
+		underlying, optionIssueDate, expiryDate,
 		callPut, strikeFixingDates, avgTypeStrike,
 		priceFixingDates, avgTypePrice
 	};
@@ -47,9 +48,9 @@ int main() {
 	MonteCarloEngine mcEngine{
 		mcSettings,
 		GBMSde,
-		asianOption.m_start_date,
+		startDate,
 		asianOption.m_expiry_date,
-		asianOption.m_underlying.m_ref_price,
+		asianOption.m_underlying.GetReferencePrice(),
 		asianPayoff
 	};
 

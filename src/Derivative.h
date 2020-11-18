@@ -14,16 +14,15 @@ class Derivative {
 	public:
 		Derivative(
 			const Underlying& underlying,
-			const _Date& startDate,
+			const _Date& issueDate,
 			const _Date& expiryDate
-		) : m_underlying{underlying}, m_start_date{startDate}, m_expiry_date{expiryDate} {}
+		) : m_underlying{underlying}, m_issue_date{issueDate}, m_expiry_date{expiryDate} {}
 
 	virtual ~Derivative() {}
 
-	// private:
-		Underlying m_underlying;
-		_Date m_start_date;
-		_Date m_expiry_date;
+	const Underlying m_underlying;
+	const _Date m_issue_date;
+	const _Date m_expiry_date;
 };
 
 #endif
