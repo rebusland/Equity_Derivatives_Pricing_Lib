@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.18)
 project(EQPricer)
 
 # specify the C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # enable all warnings (appends the -Wall flag to the previous definition of the CMAKE_CXX_FLAGS variable)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
