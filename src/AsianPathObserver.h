@@ -24,7 +24,7 @@ class AsianPathObserver : public PathObserver {
 		}
 
 		void ObservePriceAtDate(const _Date& currentDate, double S) override;
-		void ResetObserver();
+		void ResetObserver() override;
 		double GetAverage() const;
 
 	private:
