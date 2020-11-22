@@ -4,11 +4,10 @@
 
 PlainVanillaPayoff::PlainVanillaPayoff(
 		const CallPut& callPut,
-		double strike,
-		double basePrice
-	): m_call_put{callPut}, m_strike{strike}, m_base_price{basePrice} {}
+		double strike
+	): m_call_put{callPut}, m_strike{strike} {}
 
-double PlainVanillaPayoff::operator() () const {
+double PlainVanillaPayoff::operator() (double S) const {
 	int callPutSign = (m_call_put == CallPut::CALL) ? 1 : -1;
-	return std::max(0.0, callPutSign * (m_base_price - m_strike));
+	return std::max(0.0, callPutSign * (S - m_strike));
 }

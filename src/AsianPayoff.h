@@ -5,7 +5,7 @@
 
 #include "AsianOption.h"
 #include "AsianPathObserver.h"
-#include "Payoff.h"
+#include "PathDependentPayoff.h"
 #include "PathObserver.h"
 
 /**
@@ -17,21 +17,20 @@
  * (as well as date sortings) is performed upstream.
  *
  */
-class AsianPayoff : public Payoff {
+class AsianPayoff : public PathDependentPayoff {
 	public:
-		AsianPayoff(const AsianOption& asianOption);
+		AsianPayoff(const AsianOption& asianOption, double discountFactor);
 		~AsianPayoff() {}
 
 		double Evaluate() const override;
-
 		void ResetObservers() override;
-
 		std::set<PathObserver*> GetPathObservers() override;
 
 	private:
 		const AsianOption& m_asian_option;
 		AsianPathObserver m_strike_observer;
 		AsianPathObserver m_avg_price_observer;
+		double m_discount;
 };
 
 #endif

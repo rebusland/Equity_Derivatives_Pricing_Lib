@@ -2,11 +2,12 @@
 #include <vector>
 
 #include "AsianOption.h"
-#include "Underlying.h"
+#include "AsianPayoff.h"
+#include "Discounter.h"
 #include "GeometricBrownianMotion.h"
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
-#include "AsianPayoff.h"
+#include "Underlying.h"
 
 using _Date = int;
 
@@ -43,7 +44,9 @@ int main() {
 		VarianceReduction::NONE,
 		1000 // number of simulations
 	};
-	AsianPayoff asianPayoff{asianOption};
+
+	const double discountFactor = Discounter::Discount(asianOption.m_issue_date, asianOption.m_expiry_date, r);
+	AsianPayoff asianPayoff{asianOption, discountFactor};
 
 	MonteCarloEngine mcEngine{
 		mcSettings,

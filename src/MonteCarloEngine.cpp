@@ -16,7 +16,7 @@ MonteCarloEngine::MonteCarloEngine(
 			const _Date& startDate,
 			const _Date& endDate,
 			double S0,
-			Payoff& payoff
+			PathDependentPayoff& payoff
 		) : m_montecarlo_settings{mcSettings}, m_sde_function{sdeFunc}, m_start_date{startDate},
 		m_end_date{endDate}, m_S0{S0}, m_payoff{payoff} {};
 

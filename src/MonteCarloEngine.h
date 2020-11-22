@@ -4,7 +4,7 @@
 #include <functional>
 
 #include "MonteCarloSettings.h"
-#include "Payoff.h"
+#include "PathDependentPayoff.h"
 
 using _Date = int;
 
@@ -33,7 +33,7 @@ class MonteCarloEngine {
 			const _Date& startDate,
 			const _Date& endDate,
 			double S0,
-			Payoff& payoff
+			PathDependentPayoff& payoff
 		);
 
 		double EvaluatePayoff();
@@ -134,7 +134,7 @@ class MonteCarloEngine {
 		_Date m_start_date;
 		_Date m_end_date;
 		double m_S0;
-		Payoff& m_payoff;
+		PathDependentPayoff& m_payoff;
 };
 
 #endif

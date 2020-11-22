@@ -5,13 +5,12 @@
 
 class PlainVanillaPayoff {
 	public:
-		PlainVanillaPayoff(const CallPut& callPut, double strike, double basePrice);
-		double operator() () const;
+		PlainVanillaPayoff(const CallPut& callPut, double strike);
+		double operator() (double S) const;
 
 	private:		
 		const CallPut& m_call_put;
 		double m_strike;
-		double m_base_price;
 };
 
 #endif
