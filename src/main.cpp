@@ -7,6 +7,7 @@
 #include "GeometricBrownianMotion.h"
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
+#include "StatePayoff.h"
 #include "Underlying.h"
 
 using _Date = int;
@@ -54,7 +55,7 @@ int main() {
 		startDate,
 		asianOption.m_expiry_date,
 		asianOption.m_underlying.GetReferencePrice(),
-		asianPayoff
+		&asianPayoff // TODO use smart pointers instead?
 	};
 
 	double finalPrice = mcEngine.EvaluatePayoff();

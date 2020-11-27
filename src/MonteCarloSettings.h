@@ -10,7 +10,7 @@ enum class SimulationScheduler {
 enum class VarianceReduction {
 	NONE,
 	ANTITHETIC,
-	CONTROL
+	CONTROL // i.e. control variate
 };
 
 class MonteCarloSettings {

@@ -1,11 +1,13 @@
 #ifndef _PATH_DEPENDENT_PAYOFF_H_
 #define _PATH_DEPENDENT_PAYOFF_H_
 
+#include "Payoff.h"
+
 #include <set>
 
 class PathObserver;
 
-class PathDependentPayoff {
+class PathDependentPayoff : public Payoff {
 	public:
 		virtual double Evaluate() const = 0;
 
