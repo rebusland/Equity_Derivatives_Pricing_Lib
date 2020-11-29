@@ -1,12 +1,28 @@
 cmake_minimum_required(VERSION 3.18)
 
+# diagnostic information on CMake project variables are printed
+message("**************\n")
+message("Diagnostic info\n")
+
 project(EQPricer)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 14)
 
-# enable all warnings (appends the -Wall flag to the previous definition of the CMAKE_CXX_FLAGS variable)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+# COMPILER OPTIONS
+#
+# - Enable (lots of) warnings: this could be annoying after a while
+# - /permessive- (MSVC) and -pedantic-errors (GCC) (tries to) enforce conformance to the ISO C++ standard
+if (MSVC)
+	message("Compiler is MSVC, version: " ${MSVC_VERSION})
+    add_compile_options(/W4 /permissive-)
+elseif(MINGW)
+    message("Compiler is MINGW")
+    add_compile_options(-Wall -Wextra -pedantic-errors)
+else()
+	message("Compiler is " ${CMAKE_CXX_COMPILER_ID})
+	message("For this compiler, no compiler option has been set!")
+endif()
 
 # source files and build directories
 # add_subdirectory(src build)
@@ -20,10 +36,7 @@ file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
 # specify the executable's name and the sources to be built from
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-
-# diagnostic information on CMake project variables
-message("**************\n")
-message("Diagnostic info\n")
+# more diagnostic info
 message("System name: " ${CMAKE_SYSTEM_NAME})
 message("System version: " ${CMAKE_SYSTEM_VERSION})
 message("System processor: " ${CMAKE_SYSTEM_PROCESSOR})
