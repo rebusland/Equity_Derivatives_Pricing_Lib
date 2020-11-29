@@ -19,15 +19,15 @@ class ScenarioSimulator {
 
 			switch(varianceReduction) {
 				case VarianceReduction::NONE:
-					m_run_simulation = std::bind(&RunSimulationNormal, this);
+					m_run_simulation = std::bind(&ScenarioSimulator::RunSimulationNormal, this);
 					break;
 
 				case VarianceReduction::ANTITHETIC:
-					m_run_simulation = std::bind(&RunSimulationAntithetic, this);
+					m_run_simulation = std::bind(&ScenarioSimulator::RunSimulationAntithetic, this);
 					break;
 
 				case VarianceReduction::CONTROL:
-					m_run_simulation = std::bind(&RunSimulationControl, this);
+					m_run_simulation = std::bind(&ScenarioSimulator::RunSimulationControl, this);
 					break;
 
 				default:
