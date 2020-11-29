@@ -37,14 +37,15 @@ double MonteCarloEngine::EvaluatePayoff() {
 	const VarianceReduction& varianceReduction = m_montecarlo_settings.m_variance_reduction;
 
 	std::unique_ptr<ScenarioSimulator> scenarioSimulator;
-	// TODO if-else statement based on Payoff type
+	// setup the proper scenario simulator based on the type of payoff
+	// NB: if dynamic_cast to the specified type fails a nullptr is return (evaluated to false)
 	if (PathDependentPayoff* payoff = dynamic_cast<PathDependentPayoff*>(m_payoff)) {
 		scenarioSimulator = std::make_unique<PathDependentScenarioSimulator>(nSteps, dt, m_S0, m_sde_function, varianceReduction, payoff);
 
 	} else if (StatePayoff* payoff = dynamic_cast<StatePayoff*>(m_payoff)) {
 		scenarioSimulator = std::make_unique<StateScenarioSimulator>(nSteps, dt, m_S0, m_sde_function, varianceReduction, payoff);
 	} else {
-		// TODO throw exception unsupported payoff type
+		// TODO throw exception for unsupported payoff type
 	}
 
 	const int N_SIMUL = m_montecarlo_settings.m_num_simulations;
