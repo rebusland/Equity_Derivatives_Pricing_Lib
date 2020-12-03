@@ -24,6 +24,8 @@ _StatisticalInfoTable MomentsEvaluator::GetStatisticalInfo() const {
 		[](const RollingAverage& rollAvg){ return rollAvg.GetAverage(); }
 	);
 
-	_StatisticalInfo momentsInfo{"Moments", moments};
-	return _StatisticalInfoTable(1, momentsInfo);
+	_StatisticalInfoTable momentsInfoTable;
+	// in this way, everything should be moved (not copied)
+	momentsInfoTable.push_back(std::make_unique<_StatisticalInfo>("Moments", std::move(moments)));
+	return momentsInfoTable;
 }
