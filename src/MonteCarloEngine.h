@@ -5,6 +5,7 @@
 
 #include "MonteCarloSettings.h"
 #include "Payoff.h"
+#include "StatisticsGatherer.h"
 
 using _Date = int;
 
@@ -33,7 +34,8 @@ class MonteCarloEngine {
 			const _Date& startDate,
 			const _Date& endDate,
 			double S0,
-			Payoff* payoff
+			Payoff* payoff,
+			StatisticsGatherer&  statisticsGatherer
 		);
 
 		double EvaluatePayoff();
@@ -135,6 +137,7 @@ class MonteCarloEngine {
 		_Date m_end_date;
 		double m_S0;
 		Payoff* m_payoff;
+		StatisticsGatherer& m_statistics_gatherer;
 };
 
 #endif
