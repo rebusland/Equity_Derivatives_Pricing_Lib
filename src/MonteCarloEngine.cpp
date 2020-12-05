@@ -54,10 +54,11 @@ double MonteCarloEngine::EvaluatePayoff() {
 	double simulationPrice;
 	for (int i = 0; i < N_SIMUL; i++) {
 		// price estimeted in the current scenario
-		simulationPrice = scenarioSimulator.get()->RunSimulation();
+		simulationPrice = (*scenarioSimulator).RunSimulation();
 		std::cout << "Simulation " << i << " price: " << simulationPrice << "\n";
 		rollingAvgMonteCarlo.AddValue(simulationPrice);
 
+		// TODO: enable the statistics gathering only if Debug mode is active(?)
 		m_statistics_gatherer.AcquireResult(simulationPrice);
 	}
 
