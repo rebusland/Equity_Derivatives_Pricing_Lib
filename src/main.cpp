@@ -1,4 +1,6 @@
 #include <iostream>
+#include <functional>
+#include <random>
 #include <vector>
 
 #include "AsianOption.h"
@@ -43,7 +45,21 @@ int main() {
 
 	double r = 0.00012; // this corresponds to an annual rate of return of 3% ca.
 	double vola = 0.009; // this corresponds to annual volatility of 14% ca.
-	GeometricBrownianMotion GBMSde{r, vola};
+
+	/**
+	 * TODO
+	 *  - Random numbers engines (generators) in <random> header should be reproducible 
+	 *    accross compilers; however, distributions seems not!
+	 *    Should I write my own implementation of normal distribution? 
+	 *	  Or implement the Box-Muller transformation? Or start exploiting the Boost library?
+	 */
+	// Park-Miller linear_congruential_engine
+	std::minstd_rand uniformRng;
+	// by default on creation is N(0, 1) as needed
+	std::normal_distribution<double> normalDistr;
+	auto normalVariateGenerator = std::bind(normalDistr, uniformRng);
+
+	GeometricBrownianMotion GBMSde{r, vola, normalVariateGenerator};
 
 	MonteCarloSettings mcSettings{
 		SimulationScheduler::SEQUENTIAL,
@@ -51,7 +67,7 @@ int main() {
 		1000 // number of simulations
 	};
 
-	const double discountFactor = Discounter::Discount(asianOption.m_issue_date, asianOption.m_expiry_date, r);
+	const double discountFactor = Discounter::Discount(startDate, asianOption.m_expiry_date, r);
 	AsianPayoff asianPayoff{asianOption, discountFactor};
 
 	MomentsEvaluator momentsEvaluator{4};
