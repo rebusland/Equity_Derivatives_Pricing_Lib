@@ -17,6 +17,10 @@
 
 using _Date = int;
 
+// TODO IMPORTANT: we assume that the minimum time step is a single day.
+// This is the time step used by default in the underlying SDE's equation, generating the MC paths.
+constexpr double MIN_TIME_STEP = 1;
+
 /**
  * TODO:
  *  - implement the Builder pattern for constructing complex objects!!
@@ -30,9 +34,9 @@ int main() {
 	Underlying underlying{"BASE", 10.0, 0.0};
 	_Date startDate = 0;
 	_Date optionIssueDate = 0; // we assume the evaluationDate equals the issue date of the option
-	_Date expiryDate = 100;
-	std::vector<_Date> strikeFixingDates = {2, 3, 5, 6};
-	std::vector<_Date> priceFixingDates = {91, 92, 95, 96, 97, 98};
+	_Date expiryDate = 251;
+	std::vector<_Date> strikeFixingDates = {0}; // {2, 3, 5, 6};
+	std::vector<_Date> priceFixingDates = {251}; // {91, 92, 95, 96, 97, 98};
 	CallPut callPut{CallPut::CALL};
 	AvgType avgTypeStrike{AvgType::ARITHMETIC};
 	AvgType avgTypePrice{AvgType::ARITHMETIC};
@@ -59,12 +63,12 @@ int main() {
 	std::normal_distribution<double> normalDistr;
 	auto normalVariateGenerator = std::bind(normalDistr, uniformRng);
 
-	GeometricBrownianMotion GBMSde{r, vola, normalVariateGenerator};
+	GeometricBrownianMotion GBMSde{r, vola, MIN_TIME_STEP, normalVariateGenerator};
 
 	MonteCarloSettings mcSettings{
 		SimulationScheduler::SEQUENTIAL,
 		VarianceReduction::NONE,
-		1000 // number of simulations
+		10000 // number of simulations
 	};
 
 	const double discountFactor = Discounter::Discount(startDate, asianOption.m_expiry_date, r);
@@ -89,6 +93,6 @@ int main() {
 
 	double finalPrice = mcEngine.EvaluatePayoff();
 	std::cout << "Final MonteCarlo price: " << finalPrice << std::endl;
-	
+
 	StatisticsGatherer::PrintStatisticalInfoTable(compositeStatGatherer.GetStatisticalInfo());
 }

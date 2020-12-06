@@ -16,8 +16,8 @@
 MonteCarloEngine::MonteCarloEngine(
 			const MonteCarloSettings& mcSettings,
 			_SdeFunction sdeFunc,
-			const _Date& startDate,
-			const _Date& endDate,
+			_Date startDate,
+			_Date endDate,
 			double S0,
 			Payoff* payoff,
 			StatisticsGatherer& statisticsGatherer
@@ -26,12 +26,10 @@ MonteCarloEngine::MonteCarloEngine(
 		m_statistics_gatherer{statisticsGatherer} {}
 
 double MonteCarloEngine::EvaluatePayoff() {
-	// IMPORTANT, we now assume a time step of a single day
-	// Think about how to generalize step size to different intervals
-	const double dt = 1;
-	// TODO days difference: implement this for realistic _Date representations, should handle stubs and roundings
-	const double T = (m_end_date - m_start_date) / dt;
-	const int nSteps = T / dt;
+	// TODO difference in days: implement this for realistic _Date representations.
+	// Stubs and holidays should be handled. Remember: the basic time step considered is one day.
+	const double T = m_end_date - m_start_date;
+	const int nSteps = 1 + T;
 
 	const VarianceReduction& varianceReduction = m_montecarlo_settings.m_variance_reduction;
 
@@ -39,10 +37,10 @@ double MonteCarloEngine::EvaluatePayoff() {
 	// setup the proper scenario simulator based on the type of payoff
 	// NB: if dynamic_cast to the specified type fails a nullptr is return (evaluated to false)
 	if (PathDependentPayoff* payoff = dynamic_cast<PathDependentPayoff*>(m_payoff)) {
-		scenarioSimulator = std::make_unique<PathDependentScenarioSimulator>(nSteps, dt, m_S0, m_sde_function, varianceReduction, payoff);
+		scenarioSimulator = std::make_unique<PathDependentScenarioSimulator>(nSteps, m_S0, m_sde_function, varianceReduction, payoff);
 
 	} else if (StatePayoff* payoff = dynamic_cast<StatePayoff*>(m_payoff)) {
-		scenarioSimulator = std::make_unique<StateScenarioSimulator>(nSteps, dt, m_S0, m_sde_function, varianceReduction, payoff);
+		scenarioSimulator = std::make_unique<StateScenarioSimulator>(nSteps, m_S0, m_sde_function, varianceReduction, payoff);
 
 	} else {
 		// TODO throw exception for unsupported payoff type
@@ -55,7 +53,7 @@ double MonteCarloEngine::EvaluatePayoff() {
 	for (int i = 0; i < N_SIMUL; i++) {
 		// price estimeted in the current scenario
 		simulationPrice = (*scenarioSimulator).RunSimulation();
-		std::cout << "Simulation " << i << " price: " << simulationPrice << "\n";
+		// std::cout << "Simulation " << i << " price: " << simulationPrice << "\n";
 		rollingAvgMonteCarlo.AddValue(simulationPrice);
 
 		// TODO: enable the statistics gathering only if Debug mode is active(?)

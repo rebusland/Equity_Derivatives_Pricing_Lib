@@ -12,8 +12,8 @@ double PathDependentScenarioSimulator::RunSimulationNormal() {
 	double S = m_starting_price;
 
 	// If all observers are "satisfied", simulation can stop
-	while (i_step < m_nsteps and !pathObservers.empty()) {
-		std::cout << i_step << ": " << S << std::endl;
+	while (i_step < m_nsteps and not pathObservers.empty()) {
+		// std::cout << i_step << ": " << S << std::endl;
 
 		auto it_observer = pathObservers.begin();
 		// Observers are progressively removed from the container as they get completed
@@ -30,12 +30,12 @@ double PathDependentScenarioSimulator::RunSimulationNormal() {
 				// Set is an associative container (non-sequential linked-list) so only the iterator of the erased element is invalidated
 				// NB std::prev(..) as we have advanced it before; std::prev() does not change the original
 				pathObservers.erase(std::prev(it_observer));
-				std::cout << "Removed path observer. Remaining observers: " << pathObservers.size() << "\n";
+				// std::cout << "Removed path observer. Remaining observers: " << pathObservers.size() << "\n";
 			}
 		}		
 
 		// step forward: St -> S(t+dt)
-		S = S + m_sde(S, m_dt);
+		S = S + m_sde(S);
 
 		++i_step;
 	}

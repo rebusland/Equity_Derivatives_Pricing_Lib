@@ -5,17 +5,16 @@
 
 #include "MonteCarloSettings.h"
 
-using _SdeFunction = std::function<double (double, double)>;
+using _SdeFunction = std::function<double (double)>;
 
 class ScenarioSimulator {
 	public:
 		ScenarioSimulator(
 			int nSteps,
-			double dt,
 			double startPrice,
 			const _SdeFunction& sde,
 			const VarianceReduction& varianceReduction
-		) :	m_nsteps{nSteps}, m_dt{dt}, m_starting_price{startPrice}, m_sde{sde} {
+		) :	m_nsteps{nSteps}, m_starting_price{startPrice}, m_sde{sde} {
 
 			switch(varianceReduction) {
 				case VarianceReduction::NONE:
@@ -56,7 +55,6 @@ class ScenarioSimulator {
 		virtual double RunSimulationControl() = 0;
 
 		int m_nsteps;
-		double m_dt;
 		double m_starting_price;
 		const _SdeFunction& m_sde;
 

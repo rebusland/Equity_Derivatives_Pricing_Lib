@@ -8,8 +8,7 @@
 #include "StatisticsGatherer.h"
 
 using _Date = int;
-
-using _SdeFunction = std::function<double (double, double)>;
+using _SdeFunction = std::function<double (double)>;
 
 // TODO associative containers in C++ are not cache friendly, but other structures (such as vectors of pairs) are (probably) inefficient in lookup
 // using _RelevantPath = std::vector<double>;
@@ -31,8 +30,8 @@ class MonteCarloEngine {
 		MonteCarloEngine(
 			const MonteCarloSettings& mcSettings,
 			_SdeFunction sdeFunc,
-			const _Date& startDate,
-			const _Date& endDate,
+			_Date start,
+			_Date end,
 			double S0,
 			Payoff* payoff,
 			StatisticsGatherer&  statisticsGatherer

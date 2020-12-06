@@ -8,12 +8,11 @@ class StateScenarioSimulator : public ScenarioSimulator {
 	public:
 		StateScenarioSimulator(
 			int nSteps,
-			double dt,
 			double startPrice,
 			const _SdeFunction& sde,
 			const VarianceReduction& varianceReduction,
 			StatePayoff* payoff
-		) : ScenarioSimulator(nSteps, dt, startPrice, sde, varianceReduction), m_payoff{payoff} {}
+		) : ScenarioSimulator(nSteps, startPrice, sde, varianceReduction), m_payoff{payoff} {}
 
 		// VarianceReduction NONE
 		double RunSimulationNormal() override;

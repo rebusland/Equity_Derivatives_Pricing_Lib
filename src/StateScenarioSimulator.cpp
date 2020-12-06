@@ -11,7 +11,7 @@ double StateScenarioSimulator::RunSimulationNormal() {
 		std::cout << i_step << ": " << S << std::endl;
 
 		// step forward: St -> S(t+dt)
-		S = S + m_sde(S, m_dt);
+		S = S + m_sde(S);
 
 		++i_step;
 	}

@@ -10,16 +10,19 @@
  */
 class Sde {
 	public:
-		Sde(double r, double vola): m_r{r}, m_vola{vola} {}
+		Sde(double r, double vola, double dt): m_r{r}, m_vola{vola}, m_dt{dt} {}
 		virtual ~Sde() {}
 
-		// The rule for updating the underlying price given its current value and the "sufficiently small" time interval
-		// dS = f(S, dt), S(t+dt) = S + dS
-		virtual double operator() (double S, double dt) = 0;
+		// The rule for updating the underlying price given its current value 
+		// dS = f(S; [dt fixed]); S(t+dt) = S(t) + dS
+		virtual double operator() (double S) = 0;
 
 	protected:
 		double m_r;
 		double m_vola;
+		// the update time interval should be "sufficiently small". 
+		// A fixed time step is thus assumed in our implementation
+		double m_dt;
 };
 
 #endif
