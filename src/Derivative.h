@@ -3,7 +3,7 @@
 
 #include "Underlying.h"
 
-using _Date = int;
+using _Date = long;
 
 /**
  * TODO:

@@ -7,7 +7,7 @@
 class StateScenarioSimulator : public ScenarioSimulator {
 	public:
 		StateScenarioSimulator(
-			int nSteps,
+			long nSteps,
 			double startPrice,
 			const _SdeFunction& sde,
 			const VarianceReduction& varianceReduction,

@@ -7,7 +7,7 @@
 class PathDependentScenarioSimulator : public ScenarioSimulator {
 	public:
 		PathDependentScenarioSimulator(
-			int nSteps,
+			long nSteps,
 			double startPrice,
 			const _SdeFunction& sde,
 			const VarianceReduction& varianceReduction,

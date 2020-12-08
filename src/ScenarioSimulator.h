@@ -10,7 +10,7 @@ using _SdeFunction = std::function<double (double)>;
 class ScenarioSimulator {
 	public:
 		ScenarioSimulator(
-			int nSteps,
+			long nSteps,
 			double startPrice,
 			const _SdeFunction& sde,
 			const VarianceReduction& varianceReduction
@@ -54,7 +54,7 @@ class ScenarioSimulator {
 		// VarianceReduction CONTROL
 		virtual double RunSimulationControl() = 0;
 
-		int m_nsteps;
+		long m_nsteps;
 		double m_starting_price;
 		const _SdeFunction& m_sde;
 

@@ -7,7 +7,7 @@
 #include "Payoff.h"
 #include "StatisticsGatherer.h"
 
-using _Date = int;
+using _Date = long;
 using _SdeFunction = std::function<double (double)>;
 
 // TODO associative containers in C++ are not cache friendly, but other structures (such as vectors of pairs) are (probably) inefficient in lookup

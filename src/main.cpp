@@ -15,7 +15,7 @@
 #include "StatePayoff.h"
 #include "Underlying.h"
 
-using _Date = int;
+using _Date = long;
 
 // TODO IMPORTANT: we assume that the minimum time step is a single day.
 // This is the time step used by default in the underlying SDE's equation, generating the MC paths.

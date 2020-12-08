@@ -7,8 +7,6 @@
 #include "CallPut.h"
 #include "Derivative.h"
 
-using _Date = int;
-
 class AsianOption : public Derivative {
 	public:
 		AsianOption(

@@ -1,7 +1,7 @@
 #ifndef _PATH_OBSERVER_H_
 #define _PATH_OBSERVER_H_
 
-using _Date = int;
+using _Date = long;
 
 class PathObserver {
 	public:

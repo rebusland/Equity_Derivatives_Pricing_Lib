@@ -8,8 +8,6 @@
 
 #include <iostream>
 
-using _Date = int;
-
 enum class AvgType;
 
 class AsianPathObserver : public PathObserver {
