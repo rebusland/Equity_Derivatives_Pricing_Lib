@@ -1,5 +1,5 @@
 {
 	"simulationScheduler": "SEQUENTIAL",
 	"varianceReduction": "NONE",
-	"nSimulations": 10000000000
+	"nSimulations": 10000
 }

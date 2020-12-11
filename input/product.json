@@ -5,7 +5,7 @@
 		"spotPrice": 10.0
 	},
 	"issueDate": 0,
-	"expiryDate": 2,
+	"expiryDate": 253,
 	"asianOption": {
 		"callPut": "CALL",
 		"avgTypeStrike": "ARITHMETIC",
@@ -14,7 +14,7 @@
 			0
 		],
 		"priceFixingDates" : [
-			2
+			253
 		]
 	}
 }
