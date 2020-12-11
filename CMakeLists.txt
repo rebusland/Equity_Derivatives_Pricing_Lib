@@ -16,6 +16,12 @@ file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
 # specify the project's target name and the sources to be built from
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+# Add the given directories to those the compiler uses to search for include files,
+# when compiling the given target.
+# Relative paths are interpreted as relative to the current source directory.
+set(_PROJECT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third-party" CACHE STRING "Include directories for my project's target")
+target_include_directories(${PROJECT_NAME} PUBLIC ${_PROJECT_INCLUDE_DIR})
+
 # NB Visual Studio already supports multiple build configurations (MINGW e.g. do not)
 # CMAKE_BUILD_TYPE only makes sense for single-target generators, like Makefiles. 
 # It is not used for multi-target generators as those simply generate a build system
@@ -158,7 +164,9 @@ message("C++ compiler: " ${CMAKE_CXX_COMPILER_ID})
 message("C++ compiler version: " ${CMAKE_CXX_COMPILER_VERSION})
 message("")
 message("CMake source dir: " ${CMAKE_SOURCE_DIR})
-message("CMake include path: " ${CMAKE_INCLUDE_PATH})
+message("General CMake include directories: " ${CMAKE_INCLUDE_PATH})
+get_target_property(project_include_dir ${PROJECT_NAME} INCLUDE_DIRECTORIES)
+message("Project's target include directories: ${project_include_dir}")
 message("CMake binary dir: " ${CMAKE_BINARY_DIR})
 message("CMake runtime output directory: " ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 message("CMake executable output path: " ${EXECUTABLE_OUTPUT_PATH})
