@@ -1,0 +1,5 @@
+{
+	"simulationScheduler": "SEQUENTIAL",
+	"varianceReduction": "NONE",
+	"nSimulations": 10000000000
+}

@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "JSONWriter.h"
+
 /**
  * A flexible way to return multiple statistical measures.
  * Inside the pair, string is the name of the statistics and the vector contains it values.
@@ -40,9 +42,12 @@ class StatisticsGatherer {
 		}
 
 		/**
-		 * TODO add method to dump statistics table to external file (and or Excel)
+		 * TODO 
+		 *  add enum to determine where to dump the statistics table (JSON and/or Excel)?
 		 */
-		 // static void DumpStatisticsInfoTableToFile(const _StatisticalInfoTable&)
+		 static void DownloadStatisticalInfoTable(const _StatisticalInfoTable& infoTable) {
+			 JSONWriter::WriteResultsInfoTable(infoTable);
+		 }
 
 		virtual ~StatisticsGatherer(){}
 };

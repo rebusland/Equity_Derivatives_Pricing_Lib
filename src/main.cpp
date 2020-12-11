@@ -1,6 +1,8 @@
-#include <iostream>
+#include <cmath>
 #include <functional>
+#include <iostream>
 #include <random>
+#include <string>
 #include <vector>
 
 #include "AsianOption.h"
@@ -9,6 +11,7 @@
 #include "Discounter.h"
 #include "FullSampleGatherer.h"
 #include "GeometricBrownianMotion.h"
+#include "JSONReader.h"
 #include "MomentsEvaluator.h"
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
@@ -21,6 +24,11 @@ using _Date = long;
 // This is the time step used by default in the underlying SDE's equation, generating the MC paths.
 constexpr double MIN_TIME_STEP = 1;
 
+constexpr _Date VALUE_DATE = 0;
+
+// Average trading days per year. In 2020, trading days for NYSE and NASDAQ is 253
+constexpr int TRAD_DAYS_PER_YEAR = 253;
+
 /**
  * TODO:
  *  - implement the Builder pattern for constructing complex objects!!
@@ -28,27 +36,28 @@ constexpr double MIN_TIME_STEP = 1;
  *  - add more modularity to the code! Start splitting this main
  *  - standardize and check memory management accross code entities, namely use smart pointers as much as possible.
  */
-
 int main() {
 
-	Underlying underlying{"BASE", 10.0, 0.0};
-	_Date startDate = 0;
-	_Date optionIssueDate = 0; // we assume the evaluationDate equals the issue date of the option
-	_Date expiryDate = 251;
-	std::vector<_Date> strikeFixingDates = {0}; // {2, 3, 5, 6};
-	std::vector<_Date> priceFixingDates = {251}; // {91, 92, 95, 96, 97, 98};
-	CallPut callPut{CallPut::CALL};
-	AvgType avgTypeStrike{AvgType::ARITHMETIC};
-	AvgType avgTypePrice{AvgType::ARITHMETIC};
+	AsianOption asianOption = JSONReader::ReadAsianOption();
 
-	AsianOption asianOption{
-		underlying, optionIssueDate, expiryDate,
-		callPut, strikeFixingDates, avgTypeStrike,
-		priceFixingDates, avgTypePrice
-	};
+	auto flatMktData = JSONReader::ReadFlatMarketData();
+	double r = flatMktData.m_rf_rate;
+	double vola = flatMktData.m_vola;
 
-	double r = 0.00012; // this corresponds to an annual rate of return of 3% ca.
-	double vola = 0.009; // this corresponds to annual volatility of 14% ca.
+	const double discountFactor = Discounter::Discount(VALUE_DATE, asianOption.m_expiry_date, r);
+
+	AsianPayoff asianPayoff{asianOption, discountFactor};
+
+	MonteCarloSettings mcSettings = JSONReader::ReadMonteCarloSettings();
+
+	// TMP Print some inputs to check the consistency of final results
+	std::cout << "\n" << "Time to expiration (days): " << asianOption.m_expiry_date - asianOption.m_issue_date << "\n";
+	std::cout << "Option side: " << (asianOption.m_call_put == CallPut::CALL ? "Call" : "Put") << "\n";
+	std::cout << "Underlying price: " << asianOption.m_underlying.GetReferencePrice() << "\n";
+	std::cout << "Yearly risk free rate: " << r * TRAD_DAYS_PER_YEAR << "\n";
+	std::cout << "Yearly volatility: " << vola * std::sqrt(TRAD_DAYS_PER_YEAR) << "\n";
+	std::cout << "(Note: assumed " << TRAD_DAYS_PER_YEAR << " trading days per year)" << "\n\n";
+	std::cout << "Number of MonteCarlo scenarios: " << mcSettings.GetNumSimulations() << "\n\n";
 
 	/**
 	 * TODO
@@ -65,26 +74,17 @@ int main() {
 
 	GeometricBrownianMotion GBMSde{r, vola, MIN_TIME_STEP, normalVariateGenerator};
 
-	MonteCarloSettings mcSettings{
-		SimulationScheduler::SEQUENTIAL,
-		VarianceReduction::NONE,
-		10000 // number of simulations
-	};
-
-	const double discountFactor = Discounter::Discount(startDate, asianOption.m_expiry_date, r);
-	AsianPayoff asianPayoff{asianOption, discountFactor};
-
 	MomentsEvaluator momentsEvaluator{4};
 	FullSampleGatherer fullSampleGatherer;
 	CompositeStatisticsGatherer compositeStatGatherer{
-		&momentsEvaluator, // TODO use smart pointers instead?
-		&fullSampleGatherer
+		&momentsEvaluator// , // TODO use smart pointers instead?
+		//&fullSampleGatherer
 	};
 
 	MonteCarloEngine mcEngine{
 		mcSettings,
 		GBMSde,
-		startDate,
+		asianOption.m_issue_date,
 		asianOption.m_expiry_date,
 		asianOption.m_underlying.GetReferencePrice(),
 		&asianPayoff, // TODO use smart pointers instead?
@@ -92,7 +92,20 @@ int main() {
 	};
 
 	double finalPrice = mcEngine.EvaluatePayoff();
-	std::cout << "Final MonteCarlo price: " << finalPrice << std::endl;
+	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
 
-	StatisticsGatherer::PrintStatisticalInfoTable(compositeStatGatherer.GetStatisticalInfo());
+	const auto& momentsInfoTable = momentsEvaluator.GetStatisticalInfo();
+
+	// sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
+	const double M2 = momentsEvaluator.GetMomentsSoFar()[1];
+	const double adjN = mcSettings.GetNumSimulations() - 1;
+	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice)/ adjN);
+
+	std::cout << "Std dev of the mean: " << stdDevMean << std::endl;
+
+	// Print on console just the first moments of the simulation results
+	StatisticsGatherer::PrintStatisticalInfoTable(momentsInfoTable);
+
+	// Write to files all the statistical info on the MonteCarlo routine
+	// StatisticsGatherer::DownloadStatisticalInfoTable(compositeStatGatherer.GetStatisticalInfo());
 }

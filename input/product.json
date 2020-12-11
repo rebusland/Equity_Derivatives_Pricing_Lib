@@ -1,0 +1,20 @@
+{
+	"underlying": {
+		"alias": "EVILCORPINC",
+		"refPrice": 10.0,
+		"spotPrice": 10.0
+	},
+	"issueDate": 0,
+	"expiryDate": 2,
+	"asianOption": {
+		"callPut": "CALL",
+		"avgTypeStrike": "ARITHMETIC",
+		"avgTypePrice": "ARITHMETIC",
+		"strikeFixingDates" : [
+			0
+		],
+		"priceFixingDates" : [
+			2
+		]
+	}
+}
