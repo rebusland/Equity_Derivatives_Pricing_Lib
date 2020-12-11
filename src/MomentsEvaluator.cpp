@@ -16,7 +16,16 @@ void MomentsEvaluator::AcquireResult(double simulationResult) {
 }
 
 _StatisticalInfoTable MomentsEvaluator::GetStatisticalInfo() const {
-	std::vector<double> moments(4);
+	std::vector<double> moments = GetMomentsSoFar();
+
+	_StatisticalInfoTable momentsInfoTable;
+	// in this way, everything should be moved (not copied)
+	momentsInfoTable.push_back(std::make_unique<_StatisticalInfo>("Moments", std::move(moments)));
+	return momentsInfoTable;
+}
+
+std::vector<double> MomentsEvaluator::GetMomentsSoFar() const {
+	std::vector<double> moments(m_rolling_moments.size());
 
 	std::transform(
 		m_rolling_moments.begin(), m_rolling_moments.end(),
@@ -24,8 +33,5 @@ _StatisticalInfoTable MomentsEvaluator::GetStatisticalInfo() const {
 		[](const RollingAverage& rollAvg){ return rollAvg.GetAverage(); }
 	);
 
-	_StatisticalInfoTable momentsInfoTable;
-	// in this way, everything should be moved (not copied)
-	momentsInfoTable.push_back(std::make_unique<_StatisticalInfo>("Moments", std::move(moments)));
-	return momentsInfoTable;
+	return moments;
 }

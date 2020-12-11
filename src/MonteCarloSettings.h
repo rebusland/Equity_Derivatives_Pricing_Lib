@@ -23,6 +23,10 @@ class MonteCarloSettings {
 			m_variance_reduction{varianceReduction},
 			m_num_simulations{numSimulations} {}
 
+		int GetNumSimulations() const {
+			return m_num_simulations;
+		}
+
 	private:
 		SimulationScheduler m_simulation_scheduler;
 		VarianceReduction m_variance_reduction;
