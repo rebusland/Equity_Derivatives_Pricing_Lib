@@ -15,7 +15,7 @@
 #include "MomentsEvaluator.h"
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
-#include "StatePayoff.h"
+#include "PlainVanillaPayoff.h"
 #include "Underlying.h"
 
 using _Date = long;
@@ -54,6 +54,7 @@ int main() {
 	std::cout << "\n" << "Time to expiration (days): " << asianOption.m_expiry_date - asianOption.m_issue_date << "\n";
 	std::cout << "Option side: " << (asianOption.m_call_put == CallPut::CALL ? "Call" : "Put") << "\n";
 	std::cout << "Underlying price: " << asianOption.m_underlying.GetReferencePrice() << "\n";
+	std::cout << "Discount factor: " << discountFactor << "\n";
 	std::cout << "Yearly risk free rate: " << r * TRAD_DAYS_PER_YEAR << "\n";
 	std::cout << "Yearly volatility: " << vola * std::sqrt(TRAD_DAYS_PER_YEAR) << "\n";
 	std::cout << "(Note: assumed " << TRAD_DAYS_PER_YEAR << " trading days per year)" << "\n\n";
@@ -78,10 +79,11 @@ int main() {
 	FullSampleGatherer fullSampleGatherer;
 	CompositeStatisticsGatherer compositeStatGatherer{
 		&momentsEvaluator// , // TODO use smart pointers instead?
-		//&fullSampleGatherer
+		// &fullSampleGatherer
 	};
 
-	MonteCarloEngine mcEngine{
+/*
+	MonteCarloEngine<PathDependentPayoff> mcEngine{
 		mcSettings,
 		GBMSde,
 		asianOption.m_issue_date,
@@ -90,6 +92,22 @@ int main() {
 		&asianPayoff, // TODO use smart pointers instead?
 		compositeStatGatherer
 	};
+*/
+
+	auto vanilla = PlainVanillaPayoff(CallPut::CALL, 10.0);
+	using std::placeholders::_1;
+	StatePayoff vanillaFunc = std::bind(&PlainVanillaPayoff::operator(), vanilla, _1);
+	// --> TODO for StatePayoffs apply discount factor at the end!!!
+	MonteCarloEngine<StatePayoff> mcEngine{
+		mcSettings,
+		GBMSde,
+		asianOption.m_issue_date,
+		asianOption.m_expiry_date,
+		asianOption.m_underlying.GetReferencePrice(),
+		&vanillaFunc,
+		compositeStatGatherer
+	};
+
 
 	double finalPrice = mcEngine.EvaluatePayoff();
 	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";

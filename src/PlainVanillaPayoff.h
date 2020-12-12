@@ -2,15 +2,14 @@
 #define _PLAIN_VANILLA_PAYOFF_H_
 
 #include "CallPut.h"
-#include "StatePayoff.h"
 
-class PlainVanillaPayoff : public StatePayoff {
+class PlainVanillaPayoff {
 	public:
 		PlainVanillaPayoff(const CallPut& callPut, double strike);
-		double operator() (double S) const override;
+		double operator() (double S) const;
 
-	private:		
-		const CallPut& m_call_put;
+	private:
+		CallPut m_call_put;
 		double m_strike;
 };
 

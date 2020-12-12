@@ -32,7 +32,7 @@ class MonteCarloSettings {
 		VarianceReduction m_variance_reduction;
 		int m_num_simulations;
 
-		friend class MonteCarloEngine;
+		template<typename> friend class MonteCarloEngine;
 };
 
 #endif

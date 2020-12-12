@@ -8,7 +8,7 @@ double StateScenarioSimulator::RunSimulationNormal() {
 	double S = m_starting_price;
 
 	while (i_step < m_nsteps) {
-		std::cout << i_step << ": " << S << std::endl;
+		// std::cout << i_step << ": " << S << std::endl;
 
 		// step forward: St -> S(t+dt)
 		S = S + m_sde(S);

@@ -2,10 +2,16 @@
 #define _MONTECARLO_ENGINE_H_
 
 #include <functional>
+#include <memory>
+#include <type_traits>
 
 #include "MonteCarloSettings.h"
-#include "Payoff.h"
+#include "PathDependentPayoff.h"
+#include "PathDependentScenarioSimulator.h"
+#include "ProjectException.h"
+#include "StateScenarioSimulator.h"
 #include "StatisticsGatherer.h"
+#include "Utils.h"
 
 using _Date = long;
 using _SdeFunction = std::function<double (double)>;
@@ -24,22 +30,77 @@ using _SdeFunction = std::function<double (double)>;
  *	  observation. It's not guaranteed that in a multithreaded implementation, all computation "fits"
  * 	  in cache. Moreover, vector is efficient in storing and retrieving data positionally.
  */
-
+template<class T_Payoff>
 class MonteCarloEngine {
 	public:
 		MonteCarloEngine(
 			const MonteCarloSettings& mcSettings,
 			_SdeFunction sdeFunc,
-			_Date start,
-			_Date end,
+			_Date startDate,
+			_Date endDate,
 			double S0,
-			Payoff* payoff,
+			T_Payoff* payoff,
 			StatisticsGatherer&  statisticsGatherer
-		);
+		) : m_montecarlo_settings{mcSettings}, m_sde_function{sdeFunc},
+		m_start_date{startDate}, m_end_date{endDate}, m_S0{S0}, m_payoff{payoff},
+		m_statistics_gatherer{statisticsGatherer} {
+			// check template type T_Payoff is a valid choice
+			constexpr bool isStatePayoff = std::is_same<T_Payoff, StatePayoff>::value;
+			constexpr bool isPathDependentPayoff = std::is_same<T_Payoff, PathDependentPayoff>::value;
+			static_assert(
+				isStatePayoff or isPathDependentPayoff,
+				"Invalid payoff type. Supported types are StatePayoff and PathDependentPayoff"
+			);
+		}
 
-		double EvaluatePayoff();
+		double EvaluatePayoff() {
+			// TODO difference in days: implement this for realistic _Date representations.
+			// Stubs and holidays should be handled. Remember: the basic time step considered is one day.
+			const long T = m_end_date - m_start_date;
+			const long nSteps = 1 + T;
+
+			const int N_SIMUL = m_montecarlo_settings.m_num_simulations;
+
+			std::unique_ptr<ScenarioSimulator> scenarioSimulator = BuildScenarioSimulator(nSteps);
+
+			Utils::RollingAverage rollingAvgMonteCarlo{0.0, AvgType::ARITHMETIC};
+
+			double simulationPrice;
+			for (int i = 0; i < N_SIMUL; i++) {
+				// price estimeted in the current scenario
+				simulationPrice = (*scenarioSimulator).RunSimulation();
+
+				rollingAvgMonteCarlo.AddValue(simulationPrice);
+
+				// TODO: enable the statistics gathering only if Debug mode is active(?)
+				m_statistics_gatherer.AcquireResult(simulationPrice);
+			}
+
+			return rollingAvgMonteCarlo.GetAverage();
+		}
 
 	private:
+		// this ficticious template declaration is needed in order to resolve the overload with the method below!
+		template <typename T = T_Payoff>
+		typename std::enable_if<
+			std::is_same<T, PathDependentPayoff>::value, // condition for enabling method
+			std::unique_ptr<PathDependentScenarioSimulator> // method return type
+		>::type
+		BuildScenarioSimulator(int nSteps) {
+			return std::make_unique<PathDependentScenarioSimulator>(
+				nSteps, m_S0, m_sde_function, m_montecarlo_settings.m_variance_reduction, m_payoff);
+		}
+
+		template <typename T = T_Payoff>
+		typename std::enable_if<
+			std::is_same<T, StatePayoff>::value,
+			std::unique_ptr<StateScenarioSimulator>
+		>::type
+		BuildScenarioSimulator(int nSteps) {
+			return std::make_unique<StateScenarioSimulator>(
+				nSteps, m_S0, m_sde_function, m_montecarlo_settings.m_variance_reduction, m_payoff);
+		}
+
 		/**
 		 * Generate the Monte Carlo path and returns the whole path.
 		 * This overload is useful when the instrument to be priced requires the whole path (or it is extremely path-dependent).
@@ -113,21 +174,6 @@ class MonteCarloEngine {
 			return relevantPathInfo;		
 		}
 		*/
-		
-
-		/**
-		 * An interesting and (possibly) clever implementation to decouple payoff logic from path generation,
-		 * which does not require to return the whole path or a map containing relevant path spots.
-		 * Basically a series of path observers are injected which gather all the information they need as the MC path 
-		 * is being constructed along the way. The observers could then update a quantity of interest in a rolling fashion,
-		 * thus without requiring too much memory allocation. Concretely, an example of observer could be an asian fixing
-		 * observer, which update a rolling fixing value (e.g. an average or min of stock prices) on its observation dates.
-		 * Once an observer has gathered all the information he needs, he declares himself as "completed".
-		 * Technical note: pathObservers is a list so that we can remove observers from it as they get "satisfied"
-		 * while still preserving iterations.
-		 *
-		 */
-		// double RunSimulation();
 
 	private:
 		const MonteCarloSettings& m_montecarlo_settings;
@@ -135,7 +181,7 @@ class MonteCarloEngine {
 		_Date m_start_date;
 		_Date m_end_date;
 		double m_S0;
-		Payoff* m_payoff;
+		T_Payoff* m_payoff;
 		StatisticsGatherer& m_statistics_gatherer;
 };
 

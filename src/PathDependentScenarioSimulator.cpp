@@ -3,6 +3,18 @@
 #include "PathObserver.h"
 #include "PathDependentScenarioSimulator.h"
 
+/**
+ * A (possibly) clever implementation to decouple payoff logic from path generation,
+ * which does not require to return the whole path or a map containing relevant path spots.
+ * Basically, a series of path observers are injected which gather all the information they need as the MC path 
+ * is being constructed along the way. The observers could then update a quantity of interest in a rolling fashion,
+ * thus without requiring too much memory allocation. Concretely, an example of observer could be an asian fixing
+ * observer, which update a rolling fixing value (e.g. an average or min of stock prices) on its observation dates.
+ * Once an observer has gathered all the information he needs, he declares himself as "completed".
+ * Technical note: pathObservers is a set so that we can remove observers from it as they get "satisfied"
+ * while still preserving iterations.
+ *
+ */
 double PathDependentScenarioSimulator::RunSimulationNormal() {
 	m_payoff->ResetObservers();
 	std::set<PathObserver*> pathObservers(m_payoff->GetPathObservers());

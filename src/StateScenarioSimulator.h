@@ -1,8 +1,11 @@
 #ifndef _STATE_SCENARIO_SIMULATOR_H_
 #define _STATE_SCENARIO_SIMULATOR_H_
 
+#include <functional>
+
 #include "ScenarioSimulator.h"
-#include "StatePayoff.h"
+
+using StatePayoff = std::function<double (double)>;
 
 class StateScenarioSimulator : public ScenarioSimulator {
 	public:
