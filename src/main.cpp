@@ -24,10 +24,12 @@ using _Date = long;
 // This is the time step used by default in the underlying SDE's equation, generating the MC paths.
 constexpr double MIN_TIME_STEP = 1;
 
+// The evaluation date ("today")
 constexpr _Date VALUE_DATE = 0;
 
-// Average trading days per year. In 2020, trading days for NYSE and NASDAQ is 253
-constexpr int TRAD_DAYS_PER_YEAR = 253;
+// Average trading days per year.
+// (the average number of trading days per year from 1990 to 2018 has been 251.86 for NYSE and NASDAQ)
+constexpr int TRAD_DAYS_PER_YEAR = 252;
 
 /**
  * TODO:
