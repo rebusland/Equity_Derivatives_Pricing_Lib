@@ -127,5 +127,5 @@ int main() {
 	StatisticsGatherer::PrintStatisticalInfoTable(momentsInfoTable);
 
 	// Write to files all the statistical info on the MonteCarlo routine
-	// StatisticsGatherer::DownloadStatisticalInfoTable(compositeStatGatherer.GetStatisticalInfo());
+	StatisticsGatherer::DownloadStatisticalInfoTable(compositeStatGatherer.GetStatisticalInfo());
 }
