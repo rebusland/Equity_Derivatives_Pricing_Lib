@@ -24,7 +24,8 @@ double PathDependentScenarioSimulator::RunSimulationNormal() {
 	double S = m_starting_price;
 
 	// If all observers are "satisfied", simulation can stop
-	while (i_step < m_nsteps and not pathObservers.empty()) {
+	// NB <= condition: needed by the observers to get the price at the final date
+	while (i_step <= m_nsteps and not pathObservers.empty()) {
 		// std::cout << i_step << ": " << S << std::endl;
 
 		auto it_observer = pathObservers.begin();
@@ -44,7 +45,11 @@ double PathDependentScenarioSimulator::RunSimulationNormal() {
 				pathObservers.erase(std::prev(it_observer));
 				// std::cout << "Removed path observer. Remaining observers: " << pathObservers.size() << "\n";
 			}
-		}		
+		}
+
+		// observers watched the whole path: we can quit the loop
+		if (i_step == m_nsteps)
+			break;
 
 		// step forward: St -> S(t+dt)
 		S = S + m_sde(S);

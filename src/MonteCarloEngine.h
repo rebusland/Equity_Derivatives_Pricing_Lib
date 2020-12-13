@@ -56,8 +56,7 @@ class MonteCarloEngine {
 		double EvaluatePayoff() {
 			// TODO difference in days: implement this for realistic _Date representations.
 			// Stubs and holidays should be handled. Remember: the basic time step considered is one day.
-			const long T = m_end_date - m_start_date;
-			const long nSteps = 1 + T;
+			const long nSteps = m_end_date - m_start_date;
 
 			const int N_SIMUL = m_montecarlo_settings.m_num_simulations;
 
