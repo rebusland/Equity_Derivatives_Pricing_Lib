@@ -1,5 +1,6 @@
 #include <cmath>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <random>
 #include <string>
@@ -56,6 +57,8 @@ int main() {
 	std::cout << "\n" << "Time to expiration (days): " << asianOption.m_expiry_date - asianOption.m_issue_date << "\n";
 	std::cout << "Option side: " << (asianOption.m_call_put == CallPut::CALL ? "Call" : "Put") << "\n";
 	std::cout << "Underlying price: " << asianOption.m_underlying.GetReferencePrice() << "\n";
+	// from here onwards, doubles are printed with 15 significant digits
+	std::cout << std::setprecision(15);
 	std::cout << "Discount factor: " << discountFactor << "\n";
 	std::cout << "Yearly risk free rate: " << r * TRAD_DAYS_PER_YEAR << "\n";
 	std::cout << "Yearly volatility: " << vola * std::sqrt(TRAD_DAYS_PER_YEAR) << "\n";
@@ -109,7 +112,6 @@ int main() {
 		&vanillaFunc,
 		compositeStatGatherer
 	};
-
 
 	double finalPrice = mcEngine.EvaluatePayoff();
 	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
