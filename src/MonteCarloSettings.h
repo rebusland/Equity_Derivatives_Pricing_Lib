@@ -18,19 +18,19 @@ class MonteCarloSettings {
 		MonteCarloSettings(
 			const SimulationScheduler& simulationScheduler,
 			const VarianceReduction& varianceReduction,
-			int numSimulations) :
+			unsigned long long numSimulations) :
 			m_simulation_scheduler{simulationScheduler},
 			m_variance_reduction{varianceReduction},
 			m_num_simulations{numSimulations} {}
 
-		int GetNumSimulations() const {
+		unsigned long long GetNumSimulations() const {
 			return m_num_simulations;
 		}
 
 	private:
 		SimulationScheduler m_simulation_scheduler;
 		VarianceReduction m_variance_reduction;
-		int m_num_simulations;
+		unsigned long long m_num_simulations;
 
 		template<typename> friend class MonteCarloEngine;
 };

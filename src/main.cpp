@@ -52,6 +52,7 @@ int main() {
 	AsianPayoff asianPayoff{asianOption, discountFactor};
 
 	MonteCarloSettings mcSettings = JSONReader::ReadMonteCarloSettings();
+	const unsigned long long NUM_SIMUL = mcSettings.GetNumSimulations();
 
 	// TMP Print some inputs to check the consistency of final results
 	std::cout << "\n" << "Time to expiration (days): " << asianOption.m_expiry_date - asianOption.m_issue_date << "\n";
@@ -63,7 +64,7 @@ int main() {
 	std::cout << "Yearly risk free rate: " << r * TRAD_DAYS_PER_YEAR << "\n";
 	std::cout << "Yearly volatility: " << vola * std::sqrt(TRAD_DAYS_PER_YEAR) << "\n";
 	std::cout << "(Note: assumed " << TRAD_DAYS_PER_YEAR << " trading days per year)" << "\n\n";
-	std::cout << "Number of MonteCarlo scenarios: " << mcSettings.GetNumSimulations() << "\n\n";
+	std::cout << "Number of MonteCarlo scenarios: " << NUM_SIMUL << "\n\n";
 
 	/**
 	 * TODO
@@ -120,8 +121,7 @@ int main() {
 
 	// sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
 	const double M2 = momentsEvaluator.GetMomentsSoFar()[1];
-	const double adjN = mcSettings.GetNumSimulations() - 1;
-	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice)/ adjN);
+	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice) / (NUM_SIMUL - 1));
 
 	std::cout << "Std dev of the mean: " << stdDevMean << std::endl;
 

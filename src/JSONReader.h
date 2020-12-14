@@ -132,7 +132,7 @@ class JSONReader {
 			return MonteCarloSettings{
 				simulScheduler,
 				varianceReduction,
-				doc["nSimulations"].GetInt()
+				doc["nSimulations"].GetUint64()
 			};
 		}
 };

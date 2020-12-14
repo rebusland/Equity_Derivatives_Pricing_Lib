@@ -58,14 +58,14 @@ class MonteCarloEngine {
 			// Stubs and holidays should be handled. Remember: the basic time step considered is one day.
 			const long nSteps = m_end_date - m_start_date;
 
-			const int N_SIMUL = m_montecarlo_settings.m_num_simulations;
+			const unsigned long long N_SIMUL = m_montecarlo_settings.m_num_simulations;
 
 			std::unique_ptr<ScenarioSimulator> scenarioSimulator = BuildScenarioSimulator(nSteps);
 
 			Utils::RollingAverage rollingAvgMonteCarlo{0.0, AvgType::ARITHMETIC};
 
 			double simulationPrice;
-			for (int i = 0; i < N_SIMUL; i++) {
+			for (unsigned long long i = 0; i < N_SIMUL; ++i) {
 				// price estimeted in the current scenario
 				simulationPrice = (*scenarioSimulator).RunSimulation();
 
