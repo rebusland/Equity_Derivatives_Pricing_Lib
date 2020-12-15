@@ -4,7 +4,7 @@
 
 double StateScenarioSimulator::RunSimulationNormal() {
 	// move step by step through the path
-	int i_step = 0;
+	unsigned long i_step = 0;
 	double S = m_starting_price;
 
 	while (i_step < m_nsteps) {

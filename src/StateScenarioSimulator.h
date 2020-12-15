@@ -10,7 +10,7 @@ using StatePayoff = std::function<double (double)>;
 class StateScenarioSimulator : public ScenarioSimulator {
 	public:
 		StateScenarioSimulator(
-			long nSteps,
+			unsigned long nSteps,
 			double startPrice,
 			const _SdeFunction& sde,
 			const VarianceReduction& varianceReduction,

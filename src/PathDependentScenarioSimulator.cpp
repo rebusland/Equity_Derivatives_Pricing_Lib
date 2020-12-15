@@ -20,7 +20,7 @@ double PathDependentScenarioSimulator::RunSimulationNormal() {
 	std::set<PathObserver*> pathObservers(m_payoff->GetPathObservers());
 
 	// move step by step through the path
-	int i_step = 0;
+	unsigned long i_step = 0;
 	double S = m_starting_price;
 
 	// If all observers are "satisfied", simulation can stop
