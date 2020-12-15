@@ -24,7 +24,7 @@ namespace Utils {
 
 		private:
 			double m_value;
-			int m_counter = 0; // counts the number of elements which are averaged
+			unsigned int m_counter = 0; // counts the number of elements which are averaged
 			const AvgType& m_avg_type;
 	};
 }

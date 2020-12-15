@@ -4,7 +4,7 @@
 #include <numeric>
 
 double Utils::ComputeAverage(const std::vector<double>& data, const AvgType& avgType) {
-	int n = data.size();
+	unsigned int n = data.size();
 
 	if (avgType == AvgType::GEOMETRIC) {
 		auto logSumLambda = [](double init, double elem){return init + std::log(elem);};
@@ -19,15 +19,16 @@ Utils::RollingAverage::RollingAverage(double value, const AvgType& avgType):
 	m_value{value}, m_avg_type{avgType} {}
 
 void Utils::RollingAverage::AddValue(double elem) {
+	// increment counter
+	++m_counter;
+
 	if (m_avg_type == AvgType::GEOMETRIC) {
 		m_value += std::log(elem);
+		return;
 	}
 
 	// Simple Arithmetic Average
 	m_value += elem;
-	
-	// increment counter
-	++m_counter;
 }
 
 double Utils::RollingAverage::AddValueAndGetAverage(double elem) {

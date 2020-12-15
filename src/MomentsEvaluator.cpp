@@ -7,8 +7,8 @@ MomentsEvaluator::MomentsEvaluator(size_t nMoments) :
 
 void MomentsEvaluator::AcquireResult(double simulationResult) {
 	double moment = simulationResult;
-	for (unsigned i = 0; i < m_rolling_moments.size(); i++) {
-		m_rolling_moments[i].AddValue(moment);
+	for (auto& rollingMoment : m_rolling_moments) {
+		rollingMoment.AddValue(moment);
 
 		// multiplication should be faster than power operator
 		moment *= simulationResult;
