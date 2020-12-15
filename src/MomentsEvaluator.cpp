@@ -6,12 +6,10 @@ MomentsEvaluator::MomentsEvaluator(size_t nMoments) :
 	m_rolling_moments{nMoments, RollingAverage{0.0, AvgType::ARITHMETIC}} {}
 
 void MomentsEvaluator::AcquireResult(double simulationResult) {
-	double moment = simulationResult;
+	double previous = 1;
 	for (auto& rollingMoment : m_rolling_moments) {
-		rollingMoment.AddValue(moment);
-
 		// multiplication should be faster than power operator
-		moment *= simulationResult;
+		rollingMoment.AddValue(previous *= simulationResult);
 	}
 }
 
