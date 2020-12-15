@@ -51,31 +51,26 @@ class MonteCarloEngine {
 				isStatePayoff or isPathDependentPayoff,
 				"Invalid payoff type. Supported types are StatePayoff and PathDependentPayoff"
 			);
-		}
 
-		double EvaluatePayoff() {
 			// TODO difference in days: implement this for realistic _Date representations.
 			// Stubs and holidays should be handled. Remember: the basic time step considered is one day.
-			const long nSteps = m_end_date - m_start_date;
+			const unsigned long nSteps = m_end_date - m_start_date;
 
+			// initialize the object generating each scenario
+			m_scenario_simulator = BuildScenarioSimulator(nSteps);
+		}
+
+		void EvaluatePayoff() {
 			const unsigned long long N_SIMUL = m_montecarlo_settings.m_num_simulations;
 
-			std::unique_ptr<ScenarioSimulator> scenarioSimulator = BuildScenarioSimulator(nSteps);
+			// Utils::RollingAverage rollingAvgMonteCarlo{0.0, AvgType::ARITHMETIC};
+			ScenarioSimulator& scenarioSimulator = *m_scenario_simulator;
 
-			Utils::RollingAverage rollingAvgMonteCarlo{0.0, AvgType::ARITHMETIC};
-
-			double simulationPrice;
+			// double simulationPrice;
 			for (unsigned long long i = 0; i < N_SIMUL; ++i) {
 				// price estimeted in the current scenario
-				simulationPrice = (*scenarioSimulator).RunSimulation();
-
-				rollingAvgMonteCarlo.AddValue(simulationPrice);
-
-				// TODO: enable the statistics gathering only if Debug mode is active(?)
-				m_statistics_gatherer.AcquireResult(simulationPrice);
+				m_statistics_gatherer.AcquireResult(scenarioSimulator.RunSimulation());
 			}
-
-			return rollingAvgMonteCarlo.GetAverage();
 		}
 
 	private:
@@ -85,7 +80,7 @@ class MonteCarloEngine {
 			std::is_same<T, PathDependentPayoff>::value, // condition for enabling method
 			std::unique_ptr<PathDependentScenarioSimulator> // method return type
 		>::type
-		BuildScenarioSimulator(int nSteps) {
+		BuildScenarioSimulator(unsigned long nSteps) {
 			return std::make_unique<PathDependentScenarioSimulator>(
 				nSteps, m_S0, m_sde_function, m_montecarlo_settings.m_variance_reduction, m_payoff);
 		}
@@ -95,7 +90,7 @@ class MonteCarloEngine {
 			std::is_same<T, StatePayoff>::value,
 			std::unique_ptr<StateScenarioSimulator>
 		>::type
-		BuildScenarioSimulator(int nSteps) {
+		BuildScenarioSimulator(unsigned long nSteps) {
 			return std::make_unique<StateScenarioSimulator>(
 				nSteps, m_S0, m_sde_function, m_montecarlo_settings.m_variance_reduction, m_payoff);
 		}
@@ -182,6 +177,8 @@ class MonteCarloEngine {
 		double m_S0;
 		T_Payoff* m_payoff;
 		StatisticsGatherer& m_statistics_gatherer;
+
+		std::unique_ptr<ScenarioSimulator> m_scenario_simulator;
 };
 
 #endif

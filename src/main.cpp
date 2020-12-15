@@ -17,6 +17,7 @@
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
 #include "PlainVanillaPayoff.h"
+#include "Timer.h"
 #include "Underlying.h"
 
 using _Date = long;
@@ -40,6 +41,7 @@ constexpr int TRAD_DAYS_PER_YEAR = 252;
  *  - standardize and check memory management accross code entities, namely use smart pointers as much as possible.
  */
 int main() {
+	Timer mainTimer = _TIMER_();
 
 	AsianOption asianOption = JSONReader::ReadAsianOption();
 
@@ -81,7 +83,7 @@ int main() {
 
 	GeometricBrownianMotion GBMSde{r, vola, MIN_TIME_STEP, normalVariateGenerator};
 
-	MomentsEvaluator momentsEvaluator{4};
+	MomentsEvaluator momentsEvaluator{2};
 	FullSampleGatherer fullSampleGatherer;
 	CompositeStatisticsGatherer compositeStatGatherer{
 		&momentsEvaluator// , // TODO use smart pointers instead?
@@ -113,14 +115,15 @@ int main() {
 		&vanillaFunc,
 		compositeStatGatherer
 	};
+	mcEngine.EvaluatePayoff();
 
-	double finalPrice = mcEngine.EvaluatePayoff();
+	double finalPrice = momentsEvaluator.GetMomentsSoFar()[0] * discountFactor;
 	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
 
 	const auto& momentsInfoTable = momentsEvaluator.GetStatisticalInfo();
 
-	// sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
-	const double M2 = momentsEvaluator.GetMomentsSoFar()[1];
+	// sigma/sqrt(n) = sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
+	const double M2 = momentsEvaluator.GetMomentsSoFar()[1] * discountFactor * discountFactor;
 	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice) / (NUM_SIMUL - 1));
 
 	std::cout << "Std dev of the mean: " << stdDevMean << std::endl;
