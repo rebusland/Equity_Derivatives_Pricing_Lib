@@ -17,8 +17,8 @@ class PlainVanillaPayoff {
 		}
 
 	private:
-		int m_call_put_sign;
-		double m_strike;
+		const int m_call_put_sign;
+		const double m_strike;
 };
 
 #endif
