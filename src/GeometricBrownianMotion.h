@@ -22,9 +22,9 @@ class GeometricBrownianMotion : public Sde {
 			m_gaussian_variate_generator{gaussianGen} {}
 
 		double operator() (double S) override {
-				// Euler discretization scheme
-				return S * (m_risk_free_drift + m_vola_width * m_gaussian_variate_generator());
-			}
+			// Euler discretization scheme
+			return S * (m_risk_free_drift + m_vola_width * m_gaussian_variate_generator());
+		}
 
 	private:
 		// NB precompute as much as possible!

@@ -5,20 +5,24 @@
 
 #include "CallPut.h"
 
+template<CallPut>
 class PlainVanillaPayoff {
 	public:
-		PlainVanillaPayoff(
-			const CallPut& callPut,
-			double strike
-		) : m_call_put_sign{callPut == CallPut::CALL ? 1 : -1}, m_strike{strike} {}
-
-		double operator() (double S) const {
-			return std::max(0.0, m_call_put_sign * (S - m_strike));
-		}
+		PlainVanillaPayoff(double strike) : m_strike{strike} {}
+		double operator() (double S) const;
 
 	private:
-		const int m_call_put_sign;
 		const double m_strike;
 };
+
+template<>
+inline double PlainVanillaPayoff<CallPut::CALL>::operator() (double S) const {
+	return std::max(0.0, S - m_strike);
+}
+
+template<>
+inline double PlainVanillaPayoff<CallPut::PUT>::operator() (double S) const {
+	return std::max(0.0, m_strike - S);
+}
 
 #endif

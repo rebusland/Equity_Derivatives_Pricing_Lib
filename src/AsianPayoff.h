@@ -1,6 +1,7 @@
 #ifndef _ASIAN_PAYOFF_H_
 #define _ASIAN_PAYOFF_H_
 
+#include <functional>
 #include <set>
 
 #include "AsianOption.h"
@@ -30,7 +31,9 @@ class AsianPayoff : public PathDependentPayoff {
 		const AsianOption& m_asian_option;
 		AsianPathObserver m_strike_observer;
 		AsianPathObserver m_avg_price_observer;
-		double m_discount;
+		const double m_discount;
+
+		std::function<double (double, double)> m_final_vanilla_payoff;
 };
 
 #endif

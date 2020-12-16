@@ -51,8 +51,6 @@ int main() {
 
 	const double discountFactor = Discounter::Discount(VALUE_DATE, asianOption.m_expiry_date, r);
 
-	AsianPayoff asianPayoff{asianOption, discountFactor};
-
 	MonteCarloSettings mcSettings = JSONReader::ReadMonteCarloSettings();
 	const unsigned long long NUM_SIMUL = mcSettings.GetNumSimulations();
 
@@ -90,6 +88,24 @@ int main() {
 		// &fullSampleGatherer
 	};
 
+	AsianPayoff asianPayoff{asianOption, discountFactor};
+
+	StatePayoff vanillaFunc;
+	using std::placeholders::_1;
+	/* 
+	 * NB: the CPP standard states that:
+	 * << The arguments to bind are copied or moved, and are never passed by reference unless
+	 * wrapped in std::ref or std::cref>>
+	 */
+	if (asianOption.m_call_put == CallPut::CALL) {
+		auto vanillaCall = PlainVanillaPayoff<CallPut::CALL>(10.0);
+		vanillaFunc = std::bind(&PlainVanillaPayoff<CallPut::CALL>::operator(), vanillaCall, _1);
+
+	} else {
+		auto vanillaPut = PlainVanillaPayoff<CallPut::PUT>(10.0);
+		vanillaFunc = std::bind(&PlainVanillaPayoff<CallPut::PUT>::operator(), vanillaPut, _1);
+	}
+
 /*
 	MonteCarloEngine<PathDependentPayoff> mcEngine{
 		mcSettings,
@@ -100,11 +116,9 @@ int main() {
 		&asianPayoff, // TODO use smart pointers instead?
 		compositeStatGatherer
 	};
+	mcEngine.EvaluatePayoff();
 */
 
-	auto vanilla = PlainVanillaPayoff(CallPut::CALL, 10.0);
-	using std::placeholders::_1;
-	StatePayoff vanillaFunc = std::bind(&PlainVanillaPayoff::operator(), vanilla, _1);
 	// --> TODO for StatePayoffs apply discount factor at the end!!!
 	MonteCarloEngine<StatePayoff> mcEngine{
 		mcSettings,
@@ -120,13 +134,13 @@ int main() {
 	double finalPrice = momentsEvaluator.GetMomentsSoFar()[0] * discountFactor;
 	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
 
-	const auto& momentsInfoTable = momentsEvaluator.GetStatisticalInfo();
-
 	// sigma/sqrt(n) = sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
 	const double M2 = momentsEvaluator.GetMomentsSoFar()[1] * discountFactor * discountFactor;
 	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice) / (NUM_SIMUL - 1));
 
 	std::cout << "Std dev of the mean: " << stdDevMean << std::endl;
+
+	const auto& momentsInfoTable = momentsEvaluator.GetStatisticalInfo();
 
 	// Print on console just the first moments of the simulation results
 	StatisticsGatherer::PrintStatisticalInfoTable(momentsInfoTable);
