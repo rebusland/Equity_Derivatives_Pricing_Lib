@@ -41,7 +41,7 @@ constexpr int TRAD_DAYS_PER_YEAR = 252;
  *  - standardize and check memory management accross code entities, namely use smart pointers as much as possible.
  */
 int main() {
-	Timer mainTimer = _TIMER_();
+	_TIMER_MILLIS_(myTimer);
 
 	AsianOption asianOption = JSONReader::ReadAsianOption();
 
