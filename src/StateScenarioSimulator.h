@@ -17,12 +17,7 @@ class StateScenarioSimulator : public ScenarioSimulator {
 			StatePayoff* payoff
 		) : ScenarioSimulator(nSteps, startPrice, sde, varianceReduction), m_payoff{payoff} {}
 
-		// VarianceReduction NONE
-		double RunSimulationNormal() override;
-		// VarianceReduction ANTITHETIC
-		double RunSimulationAntithetic() override;
-		// VarianceReduction CONTROL
-		double RunSimulationControl() override;
+		double RunSimulation() override;
 
 	private:
 		StatePayoff* m_payoff;

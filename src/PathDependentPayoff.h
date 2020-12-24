@@ -1,19 +1,31 @@
 #ifndef _PATH_DEPENDENT_PAYOFF_H_
 #define _PATH_DEPENDENT_PAYOFF_H_
 
-#include <set>
+#include <vector>
 
-class PathObserver;
+using _Date = long;
+
+// fwd declaration
+class PathDependentScenarioSimulator;
 
 class PathDependentPayoff {
 	public:
-		virtual double Evaluate() const = 0;
+		virtual double Evaluate(const std::vector<double>& relevantSpotPrices) const = 0;
 
-		// TODO: perhaps these two methods are specific to asian payoffs
-		virtual std::set<PathObserver*> GetPathObservers() = 0;
-		virtual void ResetObservers() = 0;
+		/**
+		 * IMPORTANT:
+		 *  - Observation dates among observers are assumed to be non-overlapping.
+		 *  - Containers handling intermediate cash flows are assumed to be chronologically sorted.
+		 */
+		virtual void FillFlattenedObservationDates() = 0;
 
 		virtual ~PathDependentPayoff() {}
+
+	protected:
+		friend class PathDependentScenarioSimulator;
+
+		// the relevant observation dates to pass to MonteCarlo simulator
+		std::vector<_Date> m_flattened_observation_dates;
 };
 
 #endif

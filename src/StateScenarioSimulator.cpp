@@ -2,7 +2,7 @@
 
 #include "StateScenarioSimulator.h"
 
-double StateScenarioSimulator::RunSimulationNormal() {
+double StateScenarioSimulator::RunSimulation() {
 	// move step by step through the path
 	unsigned long i_step = 0;
 	double S = m_starting_price;
@@ -15,16 +15,7 @@ double StateScenarioSimulator::RunSimulationNormal() {
 
 		++i_step;
 	}
+	// std::cout << i_step << ": " << S << std::endl;
 
 	return (*m_payoff)(S);
-}
-
-double StateScenarioSimulator::RunSimulationAntithetic() {
-	// TODO implement
-	return -1;
-}
-
-double StateScenarioSimulator::RunSimulationControl() {
-	// TODO throw exception "Unsopported" instead...and then implement
-	return -1;
 }

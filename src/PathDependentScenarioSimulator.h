@@ -1,6 +1,8 @@
 #ifndef _PATH_DEPENDENT_SCENARIO_SIMULATOR_H_
 #define _PATH_DEPENDENT_SCENARIO_SIMULATOR_H_
 
+#include <vector>
+
 #include "ScenarioSimulator.h"
 #include "PathDependentPayoff.h"
 
@@ -12,17 +14,14 @@ class PathDependentScenarioSimulator : public ScenarioSimulator {
 			const _SdeFunction& sde,
 			const VarianceReduction& varianceReduction,
 			PathDependentPayoff* payoff
-		) : ScenarioSimulator(nSteps, startPrice, sde, varianceReduction), m_payoff{payoff} {}
+		) : ScenarioSimulator(nSteps, startPrice, sde, varianceReduction),
+		m_payoff{payoff}, m_relevant_observation_dates(payoff->m_flattened_observation_dates) {}
 
-		// VarianceReduction NONE
-		double RunSimulationNormal() override;
-		// VarianceReduction ANTITHETIC
-		double RunSimulationAntithetic() override;
-		// VarianceReduction CONTROL
-		double RunSimulationControl() override;
+		double RunSimulation() override;
 
 	private:
 		PathDependentPayoff* m_payoff;
+		const std::vector<_Date>& m_relevant_observation_dates;
 };
 
 #endif

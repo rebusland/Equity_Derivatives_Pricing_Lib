@@ -16,9 +16,6 @@
 using _Date = long;
 using _SdeFunction = std::function<double (double)>;
 
-// TODO associative containers in C++ are not cache friendly, but other structures (such as vectors of pairs) are (probably) inefficient in lookup
-// using _RelevantPath = std::vector<double>;
-
 /**
  * NB, For simulation runner:
  *  - The approach returning the vector of base prices given the observation is probably more
@@ -94,80 +91,6 @@ class MonteCarloEngine {
 			return std::make_unique<StateScenarioSimulator>(
 				nSteps, m_S0, m_sde_function, m_montecarlo_settings.m_variance_reduction, m_payoff);
 		}
-
-		/**
-		 * Generate the Monte Carlo path and returns the whole path.
-		 * This overload is useful when the instrument to be priced requires the whole path (or it is extremely path-dependent).
-		 *
-		 */
-		 /*
-		std::vector<double> GeneratePath() const {
-			// IMPORTANT, we now assume a time step of a single day
-			// Think about how to generalize step size to different intervals
-			const double dt = 1;
-			// TODO days difference implement this for realistic _Date representations, should handle stubs and roundings
-			const double T = (m_end_date - m_start_date) / dt;
-			const int nSteps = T / dt;
-
-			std::vector<double> path;
-
-			// move step by step through the path
-			int i_step = 0;
-			double S = m_S0;
-
-			while (i_step < nSteps) {
-				// step forward: St -> S(t+dt)
-				S = sdeFunc(S, dt);
-				path.push_back(S);
-				++i_step;
-			}
-
-			return path;
-		}
-		*/
-
-		/**
-		 * This overload returns just those path spots which are relevant for the evaluation of the derivative.
-		 * TODO The optimal solution for the return type must be found. The type should not be too memory-consuming, while
-		 * also allowing from the payoff evaluator code to efficiently retrieve the price information without poor lookup performance.
-		 * E.g. map<_Date, double> is efficient in lookup but memory consuming (could maybe lead to cache miss?)
-		 * vector<std::pair<_Date, double>> is stored efficiently in memory but may be worst in lookup...
-		 */
-		 /*
-		_RelevantPath GeneratePath(const std::vector<_Date>& observations) const {
-			// IMPORTANT, we now assume a time step of a single day
-			// Think about how to generalize step size to different intervals
-			const double dt = 1;
-			// TODO days difference implement this for realistic _Date representations, should handle stubs and roundings
-			const double T = (m_end_date - m_start_date) / dt;
-			const int nSteps = T / dt;
-
-			_RelevantPath relevantPathInfo;
-
-			// move step by step through the path
-			int i_step = 0;
-			double S = m_S0;
-
-			// step index representation on the path of the price fixing dates			
-			// IMPORTANT: assumed sorted
-			std::vector<int> observationIndices = MAGIA(observations); // TODO implement this
-			auto it_observations_idx = observationIndices.begin();			
-
-			while (i_step < nSteps) {
-				// step forward: St -> S(t+dt)
-				S = sdeFunc(S, dt);
-
-				if (it_observations_idx != observationIndices.end() and *it_observations_idx == i_step) {
-					relevantPathInfo ---> POPOLA con S e info sulla data;
-					std::advance(it_observations_idx, 1);
-				}
-
-				++i_step;
-			}
-
-			return relevantPathInfo;		
-		}
-		*/
 
 	private:
 		const MonteCarloSettings& m_montecarlo_settings;

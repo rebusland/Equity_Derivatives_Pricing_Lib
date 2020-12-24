@@ -2,12 +2,11 @@
 #define _ASIAN_PAYOFF_H_
 
 #include <functional>
-#include <set>
 
 #include "AsianOption.h"
-#include "AsianPathObserver.h"
 #include "PathDependentPayoff.h"
-#include "PathObserver.h"
+
+using _Date = long;
 
 /**
  * TODO:
@@ -23,14 +22,11 @@ class AsianPayoff : public PathDependentPayoff {
 		AsianPayoff(const AsianOption& asianOption, double discountFactor);
 		~AsianPayoff() {}
 
-		double Evaluate() const override;
-		void ResetObservers() override;
-		std::set<PathObserver*> GetPathObservers() override;
+		double Evaluate(const std::vector<double>& relevantSpotPrices) const override;
+		void FillFlattenedObservationDates() override;
 
 	private:
 		const AsianOption& m_asian_option;
-		AsianPathObserver m_strike_observer;
-		AsianPathObserver m_avg_price_observer;
 		const double m_discount;
 
 		std::function<double (double, double)> m_final_vanilla_payoff;

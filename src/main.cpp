@@ -20,6 +20,7 @@
 #include "Timer.h"
 #include "Underlying.h"
 
+// TODO use unsigned long instead?
 using _Date = long;
 
 // TODO IMPORTANT: we assume that the minimum time step is a single day.
@@ -106,7 +107,6 @@ int main() {
 		vanillaFunc = std::bind(&PlainVanillaPayoff<CallPut::PUT>::operator(), vanillaPut, _1);
 	}
 
-/*
 	MonteCarloEngine<PathDependentPayoff> mcEngine{
 		mcSettings,
 		GBMSde,
@@ -117,8 +117,8 @@ int main() {
 		compositeStatGatherer
 	};
 	mcEngine.EvaluatePayoff();
-*/
 
+/*
 	// --> TODO for StatePayoffs apply discount factor at the end!!!
 	MonteCarloEngine<StatePayoff> mcEngine{
 		mcSettings,
@@ -130,6 +130,7 @@ int main() {
 		compositeStatGatherer
 	};
 	mcEngine.EvaluatePayoff();
+*/
 
 	double finalPrice = momentsEvaluator.GetMomentsSoFar()[0] * discountFactor;
 	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
