@@ -6,11 +6,13 @@
 #include <string>
 #include <vector>
 
+#include "AntitheticWrapperUniVariateGenerator.h"
 #include "AsianOption.h"
 #include "AsianPayoff.h"
 #include "CompositeStatisticsGatherer.h"
 #include "Discounter.h"
 #include "FullSampleGatherer.h"
+#include "FunctionalWrapperUniVariateGenerator.h"
 #include "GeometricBrownianMotion.h"
 #include "JSONReader.h"
 #include "MomentsEvaluator.h"
@@ -78,9 +80,12 @@ int main() {
 	std::minstd_rand uniformRng;
 	// by default on creation is N(0, 1) as needed
 	std::normal_distribution<double> normalDistr;
-	auto normalVariateGenerator = std::bind(normalDistr, uniformRng);
+	auto normalVariateGeneratorFunc = std::bind(normalDistr, uniformRng);
 
-	GeometricBrownianMotion GBMSde{r, vola, MIN_TIME_STEP, normalVariateGenerator};
+	FunctionalWrapperUniVariateGenerator normalVariateGenerator{1, normalVariateGeneratorFunc};
+	AntitheticWrapperUniVariateGenerator normalVariateGeneratorAntithetic{1, &normalVariateGenerator};
+
+	GeometricBrownianMotion GBMSde{r, vola, MIN_TIME_STEP, &normalVariateGenerator/*Antithetic*/};
 
 	MomentsEvaluator momentsEvaluator{2};
 	FullSampleGatherer fullSampleGatherer;
