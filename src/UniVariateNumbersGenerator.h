@@ -33,6 +33,9 @@ class UniVariateNumbersGenerator {
 		 */
 		virtual std::vector<double> GenerateSequence() = 0;
 
+		// TODO (?)
+		// virtual void ResetSequenceSize(unsigned int newSeqSize) const = 0;
+
 		virtual ~UniVariateNumbersGenerator() {};
 
 	protected:

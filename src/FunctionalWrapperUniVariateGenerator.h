@@ -27,10 +27,7 @@ class FunctionalWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 		}
 
 		std::vector<double> GenerateSequence() override {
-			// TODO preallocate the vector as class member and reusing it could perhaps be more efficient,
-			// but this also depends on whether RVO takes place if a local vector is created.
 			std::vector<double> numberSequence(m_sequence_size);
-
 			// wrapping the generator into a ref object is necessary, otherwise a copy is made
 			std::generate(numberSequence.begin(), numberSequence.end(), std::ref(m_generator));
 			return numberSequence;

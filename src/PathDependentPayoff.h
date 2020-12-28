@@ -5,9 +5,6 @@
 
 using _Date = long;
 
-// fwd declaration
-class PathDependentScenarioSimulator;
-
 class PathDependentPayoff {
 	public:
 		virtual double Evaluate(const std::vector<double>& relevantSpotPrices) const = 0;
@@ -20,9 +17,6 @@ class PathDependentPayoff {
 		virtual void FillFlattenedObservationDates() = 0;
 
 		virtual ~PathDependentPayoff() {}
-
-	protected:
-		friend class PathDependentScenarioSimulator;
 
 		// the relevant observation dates to pass to MonteCarlo simulator
 		std::vector<_Date> m_flattened_observation_dates;

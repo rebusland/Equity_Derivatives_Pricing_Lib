@@ -3,12 +3,14 @@
 #include <algorithm>
 #include <iostream>
 
-#include "ProjectException.h"
-#include "Utils.h"
-
 AsianPayoff::AsianPayoff(const AsianOption& asianOption, double discountFactor) :
 	m_asian_option{asianOption},
-	m_discount{discountFactor} {
+	m_discount{discountFactor},
+	m_n_strike_observations{m_asian_option.GetStrikeFixingDates().size()},
+	m_n_final_ref_value_observations{m_asian_option.GetPriceFixingDates().size()},
+	m_strike_avg{0.0, m_asian_option.m_avg_type_strike},
+	m_final_ref_price_avg{0.0, m_asian_option.m_avg_type_price}
+	{
 		// It's not elegant but we avoid the inefficiency of creating and deleting at each 
 		// simulation a PlainVanillaPayoff object (which is an expensive operation).
 		if (m_asian_option.m_call_put == CallPut::CALL) {
@@ -47,29 +49,22 @@ double AsianPayoff::Evaluate(const std::vector<double>& relevantSpotPrices) cons
 	unsigned int headIdx = 0;
 
 	// get strike fixing prices
-	const unsigned int nStrikeObservations = m_asian_option.GetStrikeFixingDates().size();
-	Utils::RollingAverage strikeAvg{0.0, m_asian_option.m_avg_type_strike};
-	for (; headIdx < nStrikeObservations; ++headIdx) {
-		strikeAvg.AddValue(relevantSpotPrices[headIdx]);
+	m_strike_avg.ResetAverage(0.0); // it's cheaper to reset the rolling avgs than to recreate them each time
+	for (; headIdx < m_n_strike_observations; ++headIdx) {
+		m_strike_avg.AddValue(relevantSpotPrices[headIdx]);
 	}
-	const double strike = strikeAvg.GetAverage();
+	const double strike = m_strike_avg.GetAverage();
 	// std::cout <<"Strike: "<< strike << std::endl;
 
 	// get final avg fixing prices
-	const unsigned int nFinalRefValueObservations = m_asian_option.GetPriceFixingDates().size();
-	Utils::RollingAverage finalRefPriceAvg{0.0, m_asian_option.m_avg_type_price};
-
-	for (unsigned int offset = headIdx; headIdx < offset + nFinalRefValueObservations; ++headIdx) {
-		finalRefPriceAvg.AddValue(relevantSpotPrices[headIdx]);
+	m_final_ref_price_avg.ResetAverage(0.0);
+	for (unsigned int offset = headIdx; headIdx < offset + m_n_final_ref_value_observations; ++headIdx) {
+		m_final_ref_price_avg.AddValue(relevantSpotPrices[headIdx]);
 	}
-	const double avgPrice = finalRefPriceAvg.GetAverage();
+	const double avgPrice = m_final_ref_price_avg.GetAverage();
 	// std::cout << "Avg price: " << avgPrice << std::endl;
 
-	if (headIdx not_eq relevantSpotPrices.size()) {
-		THROW_PROJECT_EXCEPTION("Unobserved spot price while evaluating payoff.");
-	}
-
-	// TODO return cash flow instead
+	// TODO return cash flow instead and apply discount in the caller code (?)
 	// end of the path: evaluate the payoff and discount back
 	return m_discount * m_final_vanilla_payoff(strike, avgPrice);
 }

@@ -5,6 +5,7 @@
 
 #include "AsianOption.h"
 #include "PathDependentPayoff.h"
+#include "Utils.h"
 
 using _Date = long;
 
@@ -30,6 +31,12 @@ class AsianPayoff : public PathDependentPayoff {
 		const double m_discount;
 
 		std::function<double (double, double)> m_final_vanilla_payoff;
+
+		// preallocate useful variables to evaluate the payoff
+		const size_t m_n_strike_observations;
+		const size_t m_n_final_ref_value_observations;
+		mutable Utils::RollingAverage m_strike_avg;
+		mutable Utils::RollingAverage m_final_ref_price_avg;
 };
 
 #endif

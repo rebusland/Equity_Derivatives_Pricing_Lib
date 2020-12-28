@@ -13,17 +13,19 @@
 #include "Discounter.h"
 #include "FullSampleGatherer.h"
 #include "FunctionalWrapperUniVariateGenerator.h"
-#include "GeometricBrownianMotion.h"
+#include "GBMPathGenerator.h"
 #include "JSONReader.h"
 #include "MomentsEvaluator.h"
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
+#include "PathDependentPayoff.h"
 #include "PlainVanillaPayoff.h"
 #include "Timer.h"
 #include "Underlying.h"
 
 // TODO use unsigned long instead?
 using _Date = long;
+using StatePayoff = std::function<double (double)>;
 
 // TODO IMPORTANT: we assume that the minimum time step is a single day.
 // This is the time step used by default in the underlying SDE's equation, generating the MC paths.
@@ -82,10 +84,10 @@ int main() {
 	std::normal_distribution<double> normalDistr;
 	auto normalVariateGeneratorFunc = std::bind(normalDistr, uniformRng);
 
-	FunctionalWrapperUniVariateGenerator normalVariateGenerator{1, normalVariateGeneratorFunc};
-	AntitheticWrapperUniVariateGenerator normalVariateGeneratorAntithetic{1, &normalVariateGenerator};
+	FunctionalWrapperUniVariateGenerator normalVariateGenerator{2, normalVariateGeneratorFunc};
+	AntitheticWrapperUniVariateGenerator normalVariateGeneratorAntithetic{2, &normalVariateGenerator};
 
-	GeometricBrownianMotion GBMSde{r, vola, MIN_TIME_STEP, &normalVariateGenerator/*Antithetic*/};
+	// GeometricBrownianMotion GBMSde{r, vola, MIN_TIME_STEP, &normalVariateGenerator/*Antithetic*/};
 
 	MomentsEvaluator momentsEvaluator{2};
 	FullSampleGatherer fullSampleGatherer;
@@ -96,7 +98,7 @@ int main() {
 
 	AsianPayoff asianPayoff{asianOption, discountFactor};
 
-	StatePayoff vanillaFunc;
+	std::function<double (double)> vanillaFunc;
 	using std::placeholders::_1;
 	/* 
 	 * NB: the CPP standard states that:
@@ -112,37 +114,37 @@ int main() {
 		vanillaFunc = std::bind(&PlainVanillaPayoff<CallPut::PUT>::operator(), vanillaPut, _1);
 	}
 
+	GBMPathGenerator geomBrownMotionGenerator{
+		asianPayoff.m_flattened_observation_dates,
+		// std::vector<_Date>(1, asianOption.m_expiry_date),
+		asianOption.m_underlying.GetReferencePrice(),
+		r, vola, &normalVariateGeneratorAntithetic
+	};
+
 	MonteCarloEngine<PathDependentPayoff> mcEngine{
 		mcSettings,
-		GBMSde,
-		asianOption.m_issue_date,
-		asianOption.m_expiry_date,
-		asianOption.m_underlying.GetReferencePrice(),
+		&geomBrownMotionGenerator,
 		&asianPayoff, // TODO use smart pointers instead?
 		compositeStatGatherer
 	};
 	mcEngine.EvaluatePayoff();
 
 /*
-	// --> TODO for StatePayoffs apply discount factor at the end!!!
 	MonteCarloEngine<StatePayoff> mcEngine{
 		mcSettings,
-		GBMSde,
-		asianOption.m_issue_date,
-		asianOption.m_expiry_date,
-		asianOption.m_underlying.GetReferencePrice(),
-		&vanillaFunc,
+		&geomBrownMotionGenerator,
+		&vanillaFunc, // TODO use smart pointers instead?
 		compositeStatGatherer
 	};
 	mcEngine.EvaluatePayoff();
 */
 
-	double finalPrice = momentsEvaluator.GetMomentsSoFar()[0] * discountFactor;
+	double finalPrice = momentsEvaluator.GetMomentsSoFar()[0];
 	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
 
 	// sigma/sqrt(n) = sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
-	const double M2 = momentsEvaluator.GetMomentsSoFar()[1] * discountFactor * discountFactor;
-	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice) / (NUM_SIMUL - 1));
+	const double M2 = momentsEvaluator.GetMomentsSoFar()[1];
+	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice) / (0.5 * NUM_SIMUL - 1));
 
 	std::cout << "Std dev of the mean: " << stdDevMean << std::endl;
 
