@@ -128,7 +128,7 @@ int main() {
 	MonteCarloEngine<_PathDependentPayoffFunc> mcEngine{
 		mcSettings,
 		payoffObservations.size(),
-		std::move(geomBrownMotionGenerator),
+		geomBrownMotionGenerator->clone(),
 		asianPayoffFunc,
 		compositeStatGatherer.get()
 	};

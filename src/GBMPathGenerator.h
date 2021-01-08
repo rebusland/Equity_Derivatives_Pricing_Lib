@@ -50,6 +50,22 @@ class GBMPathGenerator : public StochasticPathGenerator {
 			}
 		}
 
+		std::unique_ptr<StochasticPathGenerator> clone() const {
+			// we use this form (instead of make_unique) in order to exploit the private constructor
+			return std::unique_ptr<GBMPathGenerator>(new GBMPathGenerator(*this));
+		}
+
+	private:
+		// for the sole purpose of cloning
+		GBMPathGenerator(const GBMPathGenerator& pathGen) :
+			StochasticPathGenerator(pathGen.m_observation_dates),
+			m_num_observations{pathGen.m_num_observations},
+			m_log_spot{pathGen.m_log_spot},
+			m_drifts{pathGen.m_drifts},
+			m_vola_widths{pathGen.m_vola_widths}, 
+			m_gaussian_variates{pathGen.m_gaussian_variates},
+			m_gaussian_variate_generator{pathGen.m_gaussian_variate_generator->clone()} {}
+
 	private:
 		const size_t m_num_observations;
 		const double m_log_spot;

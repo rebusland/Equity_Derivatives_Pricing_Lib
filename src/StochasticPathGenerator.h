@@ -1,6 +1,7 @@
 #ifndef _STOCHASTIC_PATH_GENERATOR_H_
 #define _STOCHASTIC_PATH_GENERATOR_H_
 
+#include <memory>
 #include <vector>
 
 using _Date = long;
@@ -14,7 +15,9 @@ class StochasticPathGenerator {
 
 		virtual void SimulateRelevantSpotPrices(std::vector<double>& spotPrices) = 0;
 
-	private:
+		virtual std::unique_ptr<StochasticPathGenerator> clone() const = 0;
+
+	protected:
 		std::vector<_Date> m_observation_dates;
 };
 
