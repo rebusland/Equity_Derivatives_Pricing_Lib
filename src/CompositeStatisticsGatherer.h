@@ -3,19 +3,16 @@
 
 #include "StatisticsGatherer.h"
 
-#include <initializer_list>
-
 class CompositeStatisticsGatherer : public StatisticsGatherer {
 	public:
-		CompositeStatisticsGatherer(std::initializer_list<StatisticsGatherer*> statsGatherers);
+		CompositeStatisticsGatherer* AddChildStatGatherer(std::unique_ptr<StatisticsGatherer> statGatherer);
 
 		void AcquireResult(double simulationResult) override;
 
 		_StatisticalInfoTable GetStatisticalInfo() const override;		
 
 	private:
-		// TODO should I use unique_ptrs instead??
-		std::vector<StatisticsGatherer*> m_stats_gatherers;
+		std::vector<std::unique_ptr<StatisticsGatherer>> m_stats_gatherers;
 };
 
 #endif

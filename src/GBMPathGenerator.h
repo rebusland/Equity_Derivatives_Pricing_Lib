@@ -3,8 +3,8 @@
 
 #include "StochasticPathGenerator.h"
 
-#include <iostream> // TODO remove
 #include <cmath>
+#include <memory>
 #include <vector>
 
 #include "UniVariateNumbersGenerator.h"
@@ -21,11 +21,11 @@ class GBMPathGenerator : public StochasticPathGenerator {
 			double S0,
 			double r,
 			double vola,
-			UniVariateNumbersGenerator* gaussianGen
+			std::unique_ptr<UniVariateNumbersGenerator> gaussianGen
 		) : StochasticPathGenerator(observationDates),
 			m_num_observations{observationDates.size()},
 			m_log_spot{std::log(S0)},
-			m_gaussian_variate_generator{gaussianGen} {
+			m_gaussian_variate_generator{std::move(gaussianGen)} {
 			// precompute as much as possible
 			m_drifts.resize(m_num_observations);
 			m_vola_widths.resize(m_num_observations);
@@ -56,7 +56,7 @@ class GBMPathGenerator : public StochasticPathGenerator {
 		std::vector<double> m_drifts;
 		std::vector<double> m_vola_widths;
 		std::vector<double> m_gaussian_variates;
-		UniVariateNumbersGenerator* m_gaussian_variate_generator;
+		std::unique_ptr<UniVariateNumbersGenerator> m_gaussian_variate_generator;
 };
 
 #endif

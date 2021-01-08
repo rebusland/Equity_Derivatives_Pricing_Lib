@@ -27,7 +27,7 @@ class AsianPayoff : public PathDependentPayoff {
 		void FillFlattenedObservationDates() override;
 
 	private:
-		const AsianOption& m_asian_option;
+		const AsianOption m_asian_option;
 		const double m_discount;
 
 		std::function<double (double, double)> m_final_vanilla_payoff;

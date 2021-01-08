@@ -2,6 +2,7 @@
 #define _MONTECARLO_ENGINE_H_
 
 #include <functional>
+#include <memory>
 #include <vector>
 
 #include "MonteCarloSettings.h"
@@ -17,12 +18,12 @@ class MonteCarloEngine {
 	public:
 		MonteCarloEngine(
 			const MonteCarloSettings& mcSettings,
-			StochasticPathGenerator* stochasticPathGenerator,
-			T_Payoff* payoff,
-			StatisticsGatherer& statisticsGatherer
+			std::unique_ptr<StochasticPathGenerator> stochasticPathGenerator,
+			std::unique_ptr<T_Payoff> payoff,
+			StatisticsGatherer* statisticsGatherer
 		) : m_montecarlo_settings{mcSettings},
-		m_stochastic_path_generator{stochasticPathGenerator},
-		m_payoff{payoff},
+		m_stochastic_path_generator{std::move(stochasticPathGenerator)},
+		m_payoff{std::move(payoff)},
 		m_statistics_gatherer{statisticsGatherer} {
 			// check template type T_Payoff is a valid choice
 			constexpr bool isStatePayoff = std::is_same<T_Payoff, StatePayoff>::value;
@@ -35,7 +36,7 @@ class MonteCarloEngine {
 			ResizeSpotPricesVector();
 		}
 
-		void EvaluatePayoff() {
+		void operator() () {
 			const unsigned long long N_SIMUL = m_montecarlo_settings.m_num_simulations;
 
 			for (unsigned long long i = 0; i < N_SIMUL / 2; ++i) {
@@ -47,7 +48,7 @@ class MonteCarloEngine {
 				const double secondResult{GetCurrentPayoffValue()};
 
 				// taking the average of two consecutive simulations lowers variance if using the antithetic variate techniques
-				m_statistics_gatherer.AcquireResult((firstResult + secondResult)/2);
+				m_statistics_gatherer->AcquireResult((firstResult + secondResult)/2);
 			}
 		}
 
@@ -56,10 +57,10 @@ class MonteCarloEngine {
 		double GetCurrentPayoffValue() const;
 
 	private:
-		const MonteCarloSettings& m_montecarlo_settings;
-		StochasticPathGenerator* m_stochastic_path_generator;
-		T_Payoff* m_payoff;
-		StatisticsGatherer& m_statistics_gatherer;
+		const MonteCarloSettings m_montecarlo_settings;
+		std::unique_ptr<StochasticPathGenerator> m_stochastic_path_generator;
+		std::unique_ptr<T_Payoff> m_payoff;
+		StatisticsGatherer* m_statistics_gatherer;
 		std::vector<double> m_spot_prices;
 };
 

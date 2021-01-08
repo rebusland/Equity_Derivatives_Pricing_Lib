@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -22,6 +24,7 @@
 #include "PlainVanillaPayoff.h"
 #include "Timer.h"
 #include "Underlying.h"
+#include "UniVariateNumbersGenerator.h"
 
 // TODO use unsigned long instead?
 using _Date = long;
@@ -84,19 +87,14 @@ int main() {
 	std::normal_distribution<double> normalDistr;
 	auto normalVariateGeneratorFunc = std::bind(normalDistr, uniformRng);
 
-	FunctionalWrapperUniVariateGenerator normalVariateGenerator{2, normalVariateGeneratorFunc};
-	AntitheticWrapperUniVariateGenerator normalVariateGeneratorAntithetic{2, &normalVariateGenerator};
+	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGenerator = 
+		std::make_unique<FunctionalWrapperUniVariateGenerator>(2, normalVariateGeneratorFunc);
+	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGeneratorAntithetic = 
+		std::make_unique<AntitheticWrapperUniVariateGenerator>(2, std::move(normalVariateGenerator));
 
-	// GeometricBrownianMotion GBMSde{r, vola, MIN_TIME_STEP, &normalVariateGenerator/*Antithetic*/};
-
-	MomentsEvaluator momentsEvaluator{2};
-	FullSampleGatherer fullSampleGatherer;
-	CompositeStatisticsGatherer compositeStatGatherer{
-		&momentsEvaluator// , // TODO use smart pointers instead?
-		// &fullSampleGatherer
-	};
-
-	AsianPayoff asianPayoff{asianOption, discountFactor};
+	std::unique_ptr<CompositeStatisticsGatherer> compositeStatGatherer(new CompositeStatisticsGatherer());
+	compositeStatGatherer->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
+	// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>);
 
 	std::function<double (double)> vanillaFunc;
 	using std::placeholders::_1;
@@ -114,20 +112,22 @@ int main() {
 		vanillaFunc = std::bind(&PlainVanillaPayoff<CallPut::PUT>::operator(), vanillaPut, _1);
 	}
 
-	GBMPathGenerator geomBrownMotionGenerator{
-		asianPayoff.m_flattened_observation_dates,
+	std::unique_ptr<PathDependentPayoff> asianPayoff = std::make_unique<AsianPayoff>(asianOption, discountFactor);
+
+	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
+		asianPayoff->m_flattened_observation_dates,
 		// std::vector<_Date>(1, asianOption.m_expiry_date),
 		asianOption.m_underlying.GetReferencePrice(),
-		r, vola, &normalVariateGeneratorAntithetic
-	};
+		r, vola, std::move(normalVariateGeneratorAntithetic)
+	);
 
 	MonteCarloEngine<PathDependentPayoff> mcEngine{
 		mcSettings,
-		&geomBrownMotionGenerator,
-		&asianPayoff, // TODO use smart pointers instead?
-		compositeStatGatherer
+		std::move(geomBrownMotionGenerator),
+		std::move(asianPayoff),
+		compositeStatGatherer.get()
 	};
-	mcEngine.EvaluatePayoff();
+	mcEngine();
 
 /*
 	MonteCarloEngine<StatePayoff> mcEngine{
@@ -139,20 +139,26 @@ int main() {
 	mcEngine.EvaluatePayoff();
 */
 
-	double finalPrice = momentsEvaluator.GetMomentsSoFar()[0];
-	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
+	const auto& fullInfoTable = compositeStatGatherer->GetStatisticalInfo();
+
+	auto momentsInfoTable_it = std::find_if(
+		fullInfoTable.cbegin(), fullInfoTable.cend(),
+		[](const auto& infoTableUP) {return (infoTableUP->first == "Moments");}
+	);
+	std::vector<double> moments = (*momentsInfoTable_it)->second;
+
+	const double finalPrice = moments[0];
+	const double M2 = moments[1];
 
 	// sigma/sqrt(n) = sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
-	const double M2 = momentsEvaluator.GetMomentsSoFar()[1];
 	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice) / (0.5 * NUM_SIMUL - 1));
 
+	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
 	std::cout << "Std dev of the mean: " << stdDevMean << std::endl;
 
-	const auto& momentsInfoTable = momentsEvaluator.GetStatisticalInfo();
-
 	// Print on console just the first moments of the simulation results
-	StatisticsGatherer::PrintStatisticalInfoTable(momentsInfoTable);
+	StatisticsGatherer::PrintStatisticalInfoTable(fullInfoTable);
 
 	// Write to files all the statistical info on the MonteCarlo routine
-	StatisticsGatherer::DownloadStatisticalInfoTable(compositeStatGatherer.GetStatisticalInfo());
+	// StatisticsGatherer::DownloadStatisticalInfoTable(fullInfoTable);
 }

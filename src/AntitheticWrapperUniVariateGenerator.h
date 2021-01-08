@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <vector>
 
 #include "UniVariateNumbersGenerator.h"
@@ -17,10 +18,10 @@ class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 		AntitheticWrapperUniVariateGenerator(
 			unsigned int seqSize,
 			double seed,
-			UniVariateNumbersGenerator* innerGenerator,
+			std::unique_ptr<UniVariateNumbersGenerator> innerGenerator,
 			std::function<double (double)> antitheticRule = std::negate<double>()
 		) :	UniVariateNumbersGenerator(seqSize, seed),
-			m_inner_generator{innerGenerator},
+			m_inner_generator{std::move(innerGenerator)},
 			m_antithetic_mapping_rule{antitheticRule} {
 				m_inner_generator->SetSeed(seed);
 
@@ -29,11 +30,11 @@ class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 
 		AntitheticWrapperUniVariateGenerator(
 			unsigned int seqSize,
-			UniVariateNumbersGenerator* innerGenerator,
+			std::unique_ptr<UniVariateNumbersGenerator> innerGenerator,
 			std::function<double (double)> antitheticRule = std::negate<double>()
 		):
 			UniVariateNumbersGenerator(seqSize),
-			m_inner_generator{innerGenerator},
+			m_inner_generator{std::move(innerGenerator)},
 			m_antithetic_mapping_rule{antitheticRule} {
 				m_antithetic_sequence.resize(m_sequence_size);
 			}
@@ -57,8 +58,7 @@ class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 		}
 
 	private:
-		// TODO use smart pointer instead?
-		UniVariateNumbersGenerator* m_inner_generator;
+		std::unique_ptr<UniVariateNumbersGenerator> m_inner_generator;
 		std::vector<double> m_antithetic_sequence;
 
 		// the rule to determine the antithetic element (by default is the opposite number)
