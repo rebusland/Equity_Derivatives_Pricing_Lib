@@ -90,7 +90,7 @@ int main() {
 	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGenerator = 
 		std::make_unique<FunctionalWrapperUniVariateGenerator>(2, normalVariateGeneratorFunc);
 	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGeneratorAntithetic = 
-		std::make_unique<AntitheticWrapperUniVariateGenerator>(2, std::move(normalVariateGenerator));
+		std::make_unique<AntitheticWrapperUniVariateGenerator>(2, normalVariateGenerator->clone());
 
 	std::unique_ptr<CompositeStatisticsGatherer> compositeStatGatherer(new CompositeStatisticsGatherer());
 	compositeStatGatherer->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
@@ -121,7 +121,8 @@ int main() {
 		payoffObservations,
 		// std::vector<_Date>(1, asianOption.m_expiry_date),
 		asianOption.m_underlying.GetReferencePrice(),
-		r, vola, std::move(normalVariateGeneratorAntithetic)
+		r, vola,
+		normalVariateGeneratorAntithetic->clone()
 	);
 
 	MonteCarloEngine<_PathDependentPayoffFunc> mcEngine{

@@ -1,6 +1,8 @@
 #ifndef _UNI_VARIATE_NUMBERS_GENERATOR_H_
 #define _UNI_VARIATE_NUMBERS_GENERATOR_H_
 
+#include <memory>
+
 /**
  * Wrapper to an arbitrary number generator, providing a common interface to generate numbers for MonteCarlo simulations.
  * The sequence could be of (pseudo)random numbers or of low-discrepancy (i.e. quasi-random) numbers.
@@ -32,6 +34,12 @@ class UniVariateNumbersGenerator {
 		 * Returns a sequence of "m_sequence_size" numbers
 		 */
 		virtual std::vector<double> GenerateSequence() = 0;
+
+		/**
+		 * Virtual constructor pattern.
+		 * Create a clone of the current instance and return the unique pointer for managing the ownership.
+		 */
+		virtual std::unique_ptr<UniVariateNumbersGenerator> clone() const = 0;
 
 		// TODO (?)
 		// virtual void ResetSequenceSize(unsigned int newSeqSize) const = 0;

@@ -33,6 +33,10 @@ class FunctionalWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 			return numberSequence;
 		}
 
+		std::unique_ptr<UniVariateNumbersGenerator> clone() const override {
+			return std::make_unique<FunctionalWrapperUniVariateGenerator>(*this);
+		}
+
 	private:
 		generator_func m_generator;
 };

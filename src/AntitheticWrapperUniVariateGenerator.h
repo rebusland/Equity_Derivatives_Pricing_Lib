@@ -57,6 +57,15 @@ class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 			return sequenceVec;
 		}
 
+		std::unique_ptr<UniVariateNumbersGenerator> clone() const override {
+			return std::make_unique<AntitheticWrapperUniVariateGenerator>(
+				m_sequence_size,
+				m_seed,
+				m_inner_generator->clone(),
+				m_antithetic_mapping_rule
+			);
+		}
+
 	private:
 		std::unique_ptr<UniVariateNumbersGenerator> m_inner_generator;
 		std::vector<double> m_antithetic_sequence;
