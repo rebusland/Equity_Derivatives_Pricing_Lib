@@ -6,34 +6,36 @@
 #include <vector>
 
 #include "MonteCarloSettings.h"
-#include "PathDependentPayoff.h"
 #include "StatisticsGatherer.h"
 #include "StochasticPathGenerator.h"
 
 using _Date = long;
-using StatePayoff = std::function<double (double)>;
+using _StatePayoffFunc = std::function<double (double)>;
+using _PathDependentPayoffFunc = std::function<double (const std::vector<double>&)>;
 
 template<class T_Payoff>
 class MonteCarloEngine {
 	public:
 		MonteCarloEngine(
 			const MonteCarloSettings& mcSettings,
+			size_t spotPricesSize,
 			std::unique_ptr<StochasticPathGenerator> stochasticPathGenerator,
-			std::unique_ptr<T_Payoff> payoff,
+			T_Payoff payoff,
 			StatisticsGatherer* statisticsGatherer
 		) : m_montecarlo_settings{mcSettings},
 		m_stochastic_path_generator{std::move(stochasticPathGenerator)},
-		m_payoff{std::move(payoff)},
+		m_payoff{payoff},
 		m_statistics_gatherer{statisticsGatherer} {
 			// check template type T_Payoff is a valid choice
-			constexpr bool isStatePayoff = std::is_same<T_Payoff, StatePayoff>::value;
-			constexpr bool isPathDependentPayoff = std::is_same<T_Payoff, PathDependentPayoff>::value;
+			constexpr bool isStatePayoff = std::is_same<T_Payoff, _StatePayoffFunc>::value;
+			constexpr bool isPathDependentPayoff = std::is_same<T_Payoff, _PathDependentPayoffFunc>::value;
 			static_assert(
 				isStatePayoff or isPathDependentPayoff,
-				"Invalid payoff type. Supported types are StatePayoff and PathDependentPayoff"
+				"Invalid payoff type. Supported types are _StatePayoff and _PathDependentPayoff"
 			);
 
-			ResizeSpotPricesVector();
+			// resize spot prices vector
+			m_spot_prices.resize(spotPricesSize);
 		}
 
 		void operator() () {
@@ -53,13 +55,12 @@ class MonteCarloEngine {
 		}
 
 	private:
-		void ResizeSpotPricesVector();
 		double GetCurrentPayoffValue() const;
 
 	private:
 		const MonteCarloSettings m_montecarlo_settings;
 		std::unique_ptr<StochasticPathGenerator> m_stochastic_path_generator;
-		std::unique_ptr<T_Payoff> m_payoff;
+		T_Payoff m_payoff;
 		StatisticsGatherer* m_statistics_gatherer;
 		std::vector<double> m_spot_prices;
 };
@@ -68,23 +69,13 @@ class MonteCarloEngine {
  * Template specializations
  */
 template<>
-inline void MonteCarloEngine<StatePayoff>::ResizeSpotPricesVector() {
-	m_spot_prices.resize(1);
+inline double MonteCarloEngine<_StatePayoffFunc>::GetCurrentPayoffValue() const {
+	return m_payoff(m_spot_prices[0]);
 }
 
 template<>
-inline void MonteCarloEngine<PathDependentPayoff>::ResizeSpotPricesVector() {
-	m_spot_prices.resize(m_payoff->m_flattened_observation_dates.size());
-}
-
-template<>
-inline double MonteCarloEngine<StatePayoff>::GetCurrentPayoffValue() const {
-	return (*m_payoff)(m_spot_prices[0]);
-}
-
-template<>
-inline double MonteCarloEngine<PathDependentPayoff>::GetCurrentPayoffValue() const {
-	return m_payoff->Evaluate(m_spot_prices);
+inline double MonteCarloEngine<_PathDependentPayoffFunc>::GetCurrentPayoffValue() const {
+	return m_payoff(m_spot_prices);
 }
 
 #endif

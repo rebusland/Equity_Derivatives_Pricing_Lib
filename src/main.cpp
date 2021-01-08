@@ -20,7 +20,6 @@
 #include "MomentsEvaluator.h"
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
-#include "PathDependentPayoff.h"
 #include "PlainVanillaPayoff.h"
 #include "Timer.h"
 #include "Underlying.h"
@@ -28,7 +27,8 @@
 
 // TODO use unsigned long instead?
 using _Date = long;
-using StatePayoff = std::function<double (double)>;
+using _StatePayoffFunc = std::function<double (double)>;
+using _PathDependentPayoffFunc = std::function<double (const std::vector<double>&)>;
 
 // TODO IMPORTANT: we assume that the minimum time step is a single day.
 // This is the time step used by default in the underlying SDE's equation, generating the MC paths.
@@ -96,7 +96,7 @@ int main() {
 	compositeStatGatherer->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
 	// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>);
 
-	std::function<double (double)> vanillaFunc;
+	_StatePayoffFunc vanillaFunc;
 	using std::placeholders::_1;
 	/* 
 	 * NB: the CPP standard states that:
@@ -112,28 +112,33 @@ int main() {
 		vanillaFunc = std::bind(&PlainVanillaPayoff<CallPut::PUT>::operator(), vanillaPut, _1);
 	}
 
-	std::unique_ptr<PathDependentPayoff> asianPayoff = std::make_unique<AsianPayoff>(asianOption, discountFactor);
+	AsianPayoff asianPayoff{asianOption, discountFactor};
+	const std::vector<_Date> payoffObservations = asianPayoff.m_flattened_observation_dates;
+
+	_PathDependentPayoffFunc asianPayoffFunc = std::bind(&AsianPayoff::operator(), asianPayoff, _1);
 
 	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
-		asianPayoff->m_flattened_observation_dates,
+		payoffObservations,
 		// std::vector<_Date>(1, asianOption.m_expiry_date),
 		asianOption.m_underlying.GetReferencePrice(),
 		r, vola, std::move(normalVariateGeneratorAntithetic)
 	);
 
-	MonteCarloEngine<PathDependentPayoff> mcEngine{
+	MonteCarloEngine<_PathDependentPayoffFunc> mcEngine{
 		mcSettings,
+		payoffObservations.size(),
 		std::move(geomBrownMotionGenerator),
-		std::move(asianPayoff),
+		asianPayoffFunc,
 		compositeStatGatherer.get()
 	};
 	mcEngine();
 
 /*
-	MonteCarloEngine<StatePayoff> mcEngine{
+	MonteCarloEngine<_StatePayoffFunc> mcEngine{
 		mcSettings,
+		1,
 		&geomBrownMotionGenerator,
-		&vanillaFunc, // TODO use smart pointers instead?
+		vanillaFunc,
 		compositeStatGatherer
 	};
 	mcEngine.EvaluatePayoff();

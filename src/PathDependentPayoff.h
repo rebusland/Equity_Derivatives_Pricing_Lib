@@ -7,7 +7,7 @@ using _Date = long;
 
 class PathDependentPayoff {
 	public:
-		virtual double Evaluate(const std::vector<double>& relevantSpotPrices) const = 0;
+		virtual double operator() (const std::vector<double>& relevantSpotPrices) const = 0;
 
 		/**
 		 * IMPORTANT:

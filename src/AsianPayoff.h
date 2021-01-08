@@ -23,7 +23,7 @@ class AsianPayoff : public PathDependentPayoff {
 		AsianPayoff(const AsianOption& asianOption, double discountFactor);
 		~AsianPayoff() {}
 
-		double Evaluate(const std::vector<double>& relevantSpotPrices) const override;
+		double operator() (const std::vector<double>& relevantSpotPrices) const override;
 		void FillFlattenedObservationDates() override;
 
 	private:

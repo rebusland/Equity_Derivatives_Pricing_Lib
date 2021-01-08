@@ -44,7 +44,7 @@ void AsianPayoff::FillFlattenedObservationDates() {
 	);
 }
 
-double AsianPayoff::Evaluate(const std::vector<double>& relevantSpotPrices) const {
+double AsianPayoff::operator() (const std::vector<double>& relevantSpotPrices) const {
 	// A moving head along relevantSpotPrices vector as it gets traversed.
 	unsigned int headIdx = 0;
 
