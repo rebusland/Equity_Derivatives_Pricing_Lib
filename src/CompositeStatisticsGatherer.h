@@ -9,7 +9,9 @@ class CompositeStatisticsGatherer : public StatisticsGatherer {
 
 		void AcquireResult(double simulationResult) override;
 
-		_StatisticalInfoTable GetStatisticalInfo() const override;		
+		_StatisticalInfoTable GetStatisticalInfo() const override;
+
+		std::unique_ptr<StatisticsGatherer> clone() const override;
 
 	private:
 		std::vector<std::unique_ptr<StatisticsGatherer>> m_stats_gatherers;

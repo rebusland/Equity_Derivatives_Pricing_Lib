@@ -6,3 +6,7 @@ _StatisticalInfoTable FullSampleGatherer::GetStatisticalInfo() const {
 	fullSampleTable.push_back(std::make_unique<_StatisticalInfo>("Full data", std::move(m_samples)));
 	return fullSampleTable;
 }
+
+std::unique_ptr<StatisticsGatherer> FullSampleGatherer::clone() const {
+	return std::make_unique<FullSampleGatherer>(*this);
+}

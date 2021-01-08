@@ -20,6 +20,8 @@ class FullSampleGatherer : public StatisticsGatherer {
 
 		_StatisticalInfoTable GetStatisticalInfo() const override;
 
+		std::unique_ptr<StatisticsGatherer> clone() const override;
+
 	protected:
 		std::vector<double> m_samples;
 };

@@ -23,3 +23,11 @@ _StatisticalInfoTable CompositeStatisticsGatherer::GetStatisticalInfo() const {
 	}
 	return compositeInfoTable;
 }
+
+std::unique_ptr<StatisticsGatherer> CompositeStatisticsGatherer::clone() const {
+	std::unique_ptr<CompositeStatisticsGatherer> compositeClone(new CompositeStatisticsGatherer());
+	for (const auto& gatherer: m_stats_gatherers) {
+		compositeClone->AddChildStatGatherer(gatherer->clone());
+	}
+	return compositeClone;
+}

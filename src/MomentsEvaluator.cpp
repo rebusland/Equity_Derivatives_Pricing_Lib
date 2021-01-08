@@ -22,6 +22,10 @@ _StatisticalInfoTable MomentsEvaluator::GetStatisticalInfo() const {
 	return momentsInfoTable;
 }
 
+std::unique_ptr<StatisticsGatherer> MomentsEvaluator::clone() const {
+	return std::make_unique<MomentsEvaluator>(*this);
+}
+
 std::vector<double> MomentsEvaluator::GetMomentsSoFar() const {
 	std::vector<double> moments(m_rolling_moments.size());
 

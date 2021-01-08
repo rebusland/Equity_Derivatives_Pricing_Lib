@@ -28,6 +28,11 @@ class StatisticsGatherer {
 		 */
 		virtual _StatisticalInfoTable GetStatisticalInfo() const = 0;
 
+		/**
+		 * Virtual constructor pattern (i.e. polimorphic cloning)
+		 */
+		virtual std::unique_ptr<StatisticsGatherer> clone() const = 0;
+
 		static void PrintStatisticalInfoTable(const _StatisticalInfoTable& infoTable) {
 			std::cout << "\n\n******* Statistics Info Table *******\n\n";
 

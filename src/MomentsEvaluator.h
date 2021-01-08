@@ -22,6 +22,7 @@ class MomentsEvaluator : public StatisticsGatherer {
 		MomentsEvaluator(size_t);
 		void AcquireResult(double) override;
 		_StatisticalInfoTable GetStatisticalInfo() const override;
+		std::unique_ptr<StatisticsGatherer> clone() const override;
 		std::vector<double> GetMomentsSoFar() const;
 
 	private:
