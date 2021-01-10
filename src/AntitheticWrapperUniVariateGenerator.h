@@ -32,8 +32,7 @@ class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 			unsigned int seqSize,
 			std::unique_ptr<UniVariateNumbersGenerator> innerGenerator,
 			std::function<double (double)> antitheticRule = std::negate<double>()
-		):
-			UniVariateNumbersGenerator(seqSize),
+		): UniVariateNumbersGenerator(seqSize),
 			m_inner_generator{std::move(innerGenerator)},
 			m_antithetic_mapping_rule{antitheticRule} {
 				m_antithetic_sequence.resize(m_sequence_size);
@@ -55,6 +54,10 @@ class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 			std::transform(sequenceVec.begin(), sequenceVec.end(),
 				m_antithetic_sequence.begin(), m_antithetic_mapping_rule);
 			return sequenceVec;
+		}
+
+		void SetSeed(double seed) override {
+			m_inner_generator->SetSeed(seed);
 		}
 
 		std::unique_ptr<UniVariateNumbersGenerator> clone() const override {
