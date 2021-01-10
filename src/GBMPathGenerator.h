@@ -4,10 +4,6 @@
 #include "StochasticPathGenerator.h"
 
 #include <cmath>
-#include <memory>
-#include <vector>
-
-#include "UniVariateNumbersGenerator.h"
 
 /**
  * IMPORTANT:
@@ -22,14 +18,11 @@ class GBMPathGenerator : public StochasticPathGenerator {
 			double r,
 			double vola,
 			std::unique_ptr<UniVariateNumbersGenerator> gaussianGen
-		) : StochasticPathGenerator(observationDates),
-			m_num_observations{observationDates.size()},
-			m_log_spot{std::log(S0)},
-			m_gaussian_variate_generator{std::move(gaussianGen)} {
+		) : StochasticPathGenerator(observationDates, std::move(gaussianGen)),
+			m_log_spot{std::log(S0)} {
 			// precompute as much as possible
 			m_drifts.resize(m_num_observations);
 			m_vola_widths.resize(m_num_observations);
-			m_gaussian_variates.resize(m_num_observations);
 
 			m_drifts[0] = (r - 0.5*vola*vola) * observationDates[0];
 			m_vola_widths[0] = vola * std::sqrt(observationDates[0]);
@@ -41,11 +34,11 @@ class GBMPathGenerator : public StochasticPathGenerator {
 		}
 
 		void SimulateRelevantSpotPrices(std::vector<double>& spotPrices) override {
-			m_gaussian_variates = m_gaussian_variate_generator->GenerateSequence();
+			m_variates = m_variates_generator->GenerateSequence();
 
 			double currentLogSpot = m_log_spot;
 			for (unsigned int i = 0; i < m_num_observations; ++i) {
-				currentLogSpot += m_drifts[i] + m_vola_widths[i] * m_gaussian_variates[i];
+				currentLogSpot += m_drifts[i] + m_vola_widths[i] * m_variates[i];
 				spotPrices[i] = std::exp(currentLogSpot);
 			}
 		}
@@ -58,21 +51,15 @@ class GBMPathGenerator : public StochasticPathGenerator {
 	private:
 		// for the sole purpose of cloning
 		GBMPathGenerator(const GBMPathGenerator& pathGen) :
-			StochasticPathGenerator(pathGen.m_observation_dates),
-			m_num_observations{pathGen.m_num_observations},
+			StochasticPathGenerator(pathGen.m_observation_dates, pathGen.m_variates_generator->clone()),
 			m_log_spot{pathGen.m_log_spot},
 			m_drifts{pathGen.m_drifts},
-			m_vola_widths{pathGen.m_vola_widths}, 
-			m_gaussian_variates{pathGen.m_gaussian_variates},
-			m_gaussian_variate_generator{pathGen.m_gaussian_variate_generator->clone()} {}
+			m_vola_widths{pathGen.m_vola_widths} {} 
 
 	private:
-		const size_t m_num_observations;
 		const double m_log_spot;
 		std::vector<double> m_drifts;
 		std::vector<double> m_vola_widths;
-		std::vector<double> m_gaussian_variates;
-		std::unique_ptr<UniVariateNumbersGenerator> m_gaussian_variate_generator;
 };
 
 #endif
