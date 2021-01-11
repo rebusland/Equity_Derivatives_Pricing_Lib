@@ -4,8 +4,8 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
-#include <random>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "AntitheticWrapperUniVariateGenerator.h"
@@ -15,6 +15,7 @@
 #include "Discounter.h"
 #include "FullSampleGatherer.h"
 #include "FunctionalWrapperUniVariateGenerator.h"
+#include "GaussianVariatesGenerator.h"
 #include "GBMPathGenerator.h"
 #include "JSONReader.h"
 #include "MomentsEvaluator.h"
@@ -40,6 +41,8 @@ constexpr _Date VALUE_DATE = 0;
 // Average trading days per year.
 // (the average number of trading days per year from 1990 to 2018 has been 251.86 for NYSE and NASDAQ)
 constexpr int TRAD_DAYS_PER_YEAR = 252;
+
+constexpr unsigned int NUM_THREAD = 4;
 
 /**
  * TODO:
@@ -74,28 +77,9 @@ int main() {
 	std::cout << "(Note: assumed " << TRAD_DAYS_PER_YEAR << " trading days per year)" << "\n\n";
 	std::cout << "Number of MonteCarlo scenarios: " << NUM_SIMUL << "\n\n";
 
-	/**
-	 * TODO
-	 *  - Random numbers engines (generators) in <random> header should be reproducible 
-	 *    accross compilers; however, distributions seems not!
-	 *    Should I write my own implementation of normal distribution? 
-	 *	  Or implement the Box-Muller transformation? Or start exploiting the Boost library?
+	/*
+	 * Payoff function
 	 */
-	// Park-Miller linear_congruential_engine
-	std::minstd_rand uniformRng;
-	// by default on creation is N(0, 1) as needed
-	std::normal_distribution<double> normalDistr;
-	auto normalVariateGeneratorFunc = std::bind(normalDistr, uniformRng);
-
-	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGenerator = 
-		std::make_unique<FunctionalWrapperUniVariateGenerator>(2, normalVariateGeneratorFunc);
-	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGeneratorAntithetic = 
-		std::make_unique<AntitheticWrapperUniVariateGenerator>(2, normalVariateGenerator->clone());
-
-	std::unique_ptr<CompositeStatisticsGatherer> compositeStatGatherer(new CompositeStatisticsGatherer());
-	compositeStatGatherer->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
-	// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>);
-
 	_StatePayoffFunc vanillaFunc;
 	using std::placeholders::_1;
 	/* 
@@ -114,8 +98,22 @@ int main() {
 
 	AsianPayoff asianPayoff{asianOption, discountFactor};
 	const std::vector<_Date> payoffObservations = asianPayoff.m_flattened_observation_dates;
+	const unsigned int payoffObsSize = payoffObservations.size();
 
 	_PathDependentPayoffFunc asianPayoffFunc = std::bind(&AsianPayoff::operator(), asianPayoff, _1);
+
+	/*
+	 * Random numbers generators and stochastic process generator
+	 */
+	std::unique_ptr<UniVariateNumbersGenerator> gaussianVariatesGenerator = 
+		std::make_unique<GaussianVariatesGenerator>(payoffObsSize);
+
+	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGeneratorAntithetic = 
+		std::make_unique<AntitheticWrapperUniVariateGenerator>(payoffObsSize, gaussianVariatesGenerator->clone());
+
+	std::unique_ptr<CompositeStatisticsGatherer> compositeStatGatherer(new CompositeStatisticsGatherer());
+	compositeStatGatherer->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
+	// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>());
 
 	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
 		payoffObservations,
@@ -125,46 +123,68 @@ int main() {
 		normalVariateGeneratorAntithetic->clone()
 	);
 
-	MonteCarloEngine<_PathDependentPayoffFunc> mcEngine{
-		mcSettings,
-		payoffObservations.size(),
-		geomBrownMotionGenerator->clone(),
-		asianPayoffFunc,
-		compositeStatGatherer.get()
-	};
-	mcEngine();
 
-/*
-	MonteCarloEngine<_StatePayoffFunc> mcEngine{
-		mcSettings,
-		1,
-		&geomBrownMotionGenerator,
-		vanillaFunc,
-		compositeStatGatherer
-	};
-	mcEngine.EvaluatePayoff();
-*/
+	/*
+	 * Start multi-threading routine
+	 */
 
-	const auto& fullInfoTable = compositeStatGatherer->GetStatisticalInfo();
+	// TODO ignore rounding error (for a high number of simulations this is negligible)
+	const unsigned long long N_SIMUL_PER_THREAD = NUM_SIMUL / NUM_THREAD;
 
-	auto momentsInfoTable_it = std::find_if(
-		fullInfoTable.cbegin(), fullInfoTable.cend(),
-		[](const auto& infoTableUP) {return (infoTableUP->first == "Moments");}
-	);
-	std::vector<double> moments = (*momentsInfoTable_it)->second;
+	std::vector<std::unique_ptr<StatisticsGatherer>> statisticsGatherers;
+	for (unsigned int i = 0; i < NUM_THREAD; ++i) {
+		statisticsGatherers.push_back(compositeStatGatherer->clone());
+	}
 
-	const double finalPrice = moments[0];
-	const double M2 = moments[1];
+	std::vector<std::thread> thread_vec;
+	int thread_seed = 1;
+	for (const auto& statGatherer : statisticsGatherers) {
+		// TODO try also the case with _StatePayoffFunc!
+		std::unique_ptr<StochasticPathGenerator> pathGenerator = geomBrownMotionGenerator->clone();
+
+		// TODO: find a cleaner and more reasoned way to seed the seed in each thread
+		pathGenerator->SetVariateGeneratorSeed(thread_seed++);
+
+		MonteCarloEngine<_PathDependentPayoffFunc> mcEngine{
+			N_SIMUL_PER_THREAD,
+			payoffObsSize,
+			std::move(pathGenerator),
+			asianPayoffFunc,
+			statGatherer.get()
+		};
+		thread_vec.emplace_back(std::move(mcEngine));
+	}
+
+	// join all threads
+	std::for_each(thread_vec.begin(), thread_vec.end(), [](auto& thr){ thr.join(); });
+
+	/*
+	 * TODO the merging of info is implemented just for the MomentsEvaluator
+	 * TODO find a more structured way to merge the results coming from each thread
+	 * gather the results from each thread and merge them to get the complete statistical results
+	 */
+	std::vector<std::vector<double>> momentsPerThreadVec;
+	for (const auto& statGatherer : statisticsGatherers) {
+		const auto& fullInfoTable = statGatherer->GetStatisticalInfo();
+
+		auto momentsInfoTable_it = std::find_if(
+			fullInfoTable.cbegin(), fullInfoTable.cend(),
+			[](const auto& infoTable) {return (infoTable.first == MOMENTS_STRING);}
+		);
+		momentsPerThreadVec.push_back(std::move(momentsInfoTable_it->second));
+	}
+	_StatisticalInfo mergedMoments = MomentsEvaluator::MergeMomentsInfo(momentsPerThreadVec);
+	StatisticsGatherer::PrintStatisticalInfoTable(std::vector<_StatisticalInfo>(1, mergedMoments));
+
+	// TODO: Print table for each thread in a separate file?
+	// StatisticsGatherer::DownloadStatisticalInfoTable(fullInfoTable);
+
+	const double finalPrice = (mergedMoments.second)[0];
+	const double M2 = (mergedMoments.second)[1];
 
 	// sigma/sqrt(n) = sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
 	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice) / (0.5 * NUM_SIMUL - 1));
 
 	std::cout << "Final MonteCarlo price: " << finalPrice << "\n";
-	std::cout << "Std dev of the mean: " << stdDevMean << std::endl;
-
-	// Print on console just the first moments of the simulation results
-	StatisticsGatherer::PrintStatisticalInfoTable(fullInfoTable);
-
-	// Write to files all the statistical info on the MonteCarlo routine
-	// StatisticsGatherer::DownloadStatisticalInfoTable(fullInfoTable);
+	std::cout << "Std dev of the mean: " << stdDevMean << "\n\n";
 }

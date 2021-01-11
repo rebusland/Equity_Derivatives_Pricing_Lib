@@ -14,7 +14,7 @@
  * Inside the pair, string is the name of the statistics and the vector contains it values.
  */
 using _StatisticalInfo = std::pair<std::string, std::vector<double>>;
-using _StatisticalInfoTable = std::vector<std::unique_ptr<_StatisticalInfo>>;
+using _StatisticalInfoTable = std::vector<_StatisticalInfo>;
 
 class StatisticsGatherer {
 	public:
@@ -36,10 +36,10 @@ class StatisticsGatherer {
 		static void PrintStatisticalInfoTable(const _StatisticalInfoTable& infoTable) {
 			std::cout << "\n\n******* Statistics Info Table *******\n\n";
 
-			for (const std::unique_ptr<_StatisticalInfo>& singleInfo : infoTable) {
+			for (const _StatisticalInfo& singleInfo : infoTable) {
 				// each singleInfo is printed on a row
-				std::cout << std::endl << singleInfo->first << ": ";
-				for (double statMeasure : singleInfo->second) {
+				std::cout << std::endl << singleInfo.first << ": ";
+				for (double statMeasure : singleInfo.second) {
 					std::cout << statMeasure << " ";
 				}
 			}

@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#define FULL_DATA_STRING "Full data"
+
 /**
  * Gather all the samples, basically it's a decorator to the vector of samples exposing 
  * a StatisticsGatherer's interface. All the results gathered can then be dumped to an external

@@ -6,6 +6,8 @@
 
 using namespace Utils;
 
+#define MOMENTS_STRING "Moments"
+
 /**
  * A rolling evaluator of the first n moments, i.e. <X>, <X^2>, <X^3>...<X^n>, when n 
  * can be specified at runtime.
@@ -24,6 +26,8 @@ class MomentsEvaluator : public StatisticsGatherer {
 		_StatisticalInfoTable GetStatisticalInfo() const override;
 		std::unique_ptr<StatisticsGatherer> clone() const override;
 		std::vector<double> GetMomentsSoFar() const;
+
+		static _StatisticalInfo MergeMomentsInfo(const std::vector<std::vector<double>>& momentsInfoVec);
 
 	private:
 		std::vector<RollingAverage> m_rolling_moments;

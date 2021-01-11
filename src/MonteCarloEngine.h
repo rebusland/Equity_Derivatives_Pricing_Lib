@@ -17,12 +17,12 @@ template<class T_Payoff>
 class MonteCarloEngine {
 	public:
 		MonteCarloEngine(
-			const MonteCarloSettings& mcSettings,
+			const unsigned long long nSimul,
 			size_t spotPricesSize,
 			std::unique_ptr<StochasticPathGenerator> stochasticPathGenerator,
 			T_Payoff payoff,
 			StatisticsGatherer* statisticsGatherer
-		) : m_montecarlo_settings{mcSettings},
+		) : m_n_simul{nSimul},
 		m_stochastic_path_generator{std::move(stochasticPathGenerator)},
 		m_payoff{payoff},
 		m_statistics_gatherer{statisticsGatherer} {
@@ -39,9 +39,7 @@ class MonteCarloEngine {
 		}
 
 		void operator() () {
-			const unsigned long long N_SIMUL = m_montecarlo_settings.m_num_simulations;
-
-			for (unsigned long long i = 0; i < N_SIMUL / 2; ++i) {
+			for (unsigned long long i = 0; i < m_n_simul / 2; ++i) {
 				// price estimeted in the current scenario
 				m_stochastic_path_generator->SimulateRelevantSpotPrices(m_spot_prices);
 				const double firstResult{GetCurrentPayoffValue()};
@@ -58,7 +56,7 @@ class MonteCarloEngine {
 		double GetCurrentPayoffValue() const;
 
 	private:
-		const MonteCarloSettings m_montecarlo_settings;
+		const unsigned long long m_n_simul;
 		std::unique_ptr<StochasticPathGenerator> m_stochastic_path_generator;
 		T_Payoff m_payoff;
 		StatisticsGatherer* m_statistics_gatherer;

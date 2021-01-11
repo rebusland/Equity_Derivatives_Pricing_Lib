@@ -9,18 +9,18 @@
 #include "rapidjson/stringbuffer.h"
 
 using _StatisticalInfo = std::pair<std::string, std::vector<double>>;
-using _StatisticalInfoTable = std::vector<std::unique_ptr<_StatisticalInfo>>;
+using _StatisticalInfoTable = std::vector<_StatisticalInfo>;
 
 class JSONWriter {
 	public:
 		static void WriteResultsInfoTable(const _StatisticalInfoTable& infoTable) {
 			rapidjson::Document doc;
 			doc.SetObject();
-			for (const auto& statInfoPtr : infoTable) {
+			for (const auto& statInfo : infoTable) {
 				rapidjson::Value statResultArray(rapidjson::kArrayType);
 
 				// a bit annoying..why can't I just assign the vector to the rapidjson array?
-				for (const double singleResult : (*statInfoPtr).second) {
+				for (const double singleResult : statInfo.second) {
 					statResultArray.PushBack(singleResult, doc.GetAllocator());
 				}
 
@@ -28,7 +28,7 @@ class JSONWriter {
 				 * a non-literal as the key name. Indeed, this is the solution proposed in the
 				 * RapidJson documentation.
 				 */
-				rapidjson::Value key(((*statInfoPtr).first).c_str(), doc.GetAllocator());
+				rapidjson::Value key((statInfo.first).c_str(), doc.GetAllocator());
 				doc.AddMember(key, statResultArray, doc.GetAllocator());
 			}
 
