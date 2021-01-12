@@ -112,8 +112,9 @@ int main() {
 		std::make_unique<AntitheticWrapperUniVariateGenerator>(payoffObsSize, gaussianVariatesGenerator->clone());
 
 	std::unique_ptr<CompositeStatisticsGatherer> compositeStatGatherer(new CompositeStatisticsGatherer());
-	compositeStatGatherer->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
-	// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>());
+	compositeStatGatherer
+		->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
+		// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>());
 
 	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
 		payoffObservations,
@@ -142,7 +143,7 @@ int main() {
 		// TODO try also the case with _StatePayoffFunc!
 		std::unique_ptr<StochasticPathGenerator> pathGenerator = geomBrownMotionGenerator->clone();
 
-		// TODO: find a cleaner and more reasoned way to seed the seed in each thread
+		// TODO: find a cleaner and more reasoned way to set the seed in each thread
 		pathGenerator->SetVariateGeneratorSeed(thread_seed++);
 
 		MonteCarloEngine<_PathDependentPayoffFunc> mcEngine{
@@ -164,6 +165,7 @@ int main() {
 	 * gather the results from each thread and merge them to get the complete statistical results
 	 */
 	std::vector<std::vector<double>> momentsPerThreadVec;
+	int idx = 1;
 	for (const auto& statGatherer : statisticsGatherers) {
 		const auto& fullInfoTable = statGatherer->GetStatisticalInfo();
 
@@ -172,15 +174,18 @@ int main() {
 			[](const auto& infoTable) {return (infoTable.first == MOMENTS_STRING);}
 		);
 		momentsPerThreadVec.push_back(std::move(momentsInfoTable_it->second));
+
+		// Print info table for each thread in a separate file
+		StatisticsGatherer::DownloadStatisticalInfoTable(fullInfoTable, "_thread" + std::to_string(idx++));
 	}
-	_StatisticalInfo mergedMoments = MomentsEvaluator::MergeMomentsInfo(momentsPerThreadVec);
-	StatisticsGatherer::PrintStatisticalInfoTable(std::vector<_StatisticalInfo>(1, mergedMoments));
+	_StatisticalInfoTable mergedMomentsTable = _StatisticalInfoTable(1,	MomentsEvaluator::MergeMomentsInfo(momentsPerThreadVec));
+	StatisticsGatherer::PrintStatisticalInfoTable(mergedMomentsTable);
+	StatisticsGatherer::DownloadStatisticalInfoTable(mergedMomentsTable);
 
-	// TODO: Print table for each thread in a separate file?
-	// StatisticsGatherer::DownloadStatisticalInfoTable(fullInfoTable);
+	const auto& moments = mergedMomentsTable[0].second;
 
-	const double finalPrice = (mergedMoments.second)[0];
-	const double M2 = (mergedMoments.second)[1];
+	const double finalPrice = moments[0];
+	const double M2 = moments[1];
 
 	// sigma/sqrt(n) = sqrt(M2 - M1^2) / sqrt(n) (NB: finalPrice == M1)
 	const double stdDevMean = std::sqrt((M2 - finalPrice * finalPrice) / (0.5 * NUM_SIMUL - 1));

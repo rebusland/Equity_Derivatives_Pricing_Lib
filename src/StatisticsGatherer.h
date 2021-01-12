@@ -50,8 +50,11 @@ class StatisticsGatherer {
 		 * TODO 
 		 *  add enum to determine where to dump the statistics table (JSON and/or Excel)?
 		 */
-		 static void DownloadStatisticalInfoTable(const _StatisticalInfoTable& infoTable) {
-			 JSONWriter::WriteResultsInfoTable(infoTable);
+		 static void DownloadStatisticalInfoTable(
+			const _StatisticalInfoTable& infoTable, 
+			std::string additionalFileLabel=""
+		) {
+			 JSONWriter::WriteResultsInfoTable(infoTable, additionalFileLabel);
 		 }
 
 		virtual ~StatisticsGatherer(){}

@@ -1,6 +1,9 @@
 #ifndef _JSON_WRITER_H_
 #define _JSON_WRITER_H_
 
+#define OUTPUT_FOLDER "output"
+#define BASE_FILE_NAME "statResults"
+
 #include <fstream>
 
 #include "rapidjson/document.h"
@@ -13,7 +16,10 @@ using _StatisticalInfoTable = std::vector<_StatisticalInfo>;
 
 class JSONWriter {
 	public:
-		static void WriteResultsInfoTable(const _StatisticalInfoTable& infoTable) {
+		static void WriteResultsInfoTable(
+			const _StatisticalInfoTable& infoTable,
+			std::string additionalFileLabel=""
+		) {
 			rapidjson::Document doc;
 			doc.SetObject();
 			for (const auto& statInfo : infoTable) {
@@ -32,7 +38,8 @@ class JSONWriter {
 				doc.AddMember(key, statResultArray, doc.GetAllocator());
 			}
 
-			std::ofstream ofs("output/statResults.json");
+			std::string fullFileName = OUTPUT_FOLDER "/" BASE_FILE_NAME + additionalFileLabel + ".json";
+			std::ofstream ofs(fullFileName.c_str());
 			rapidjson::OStreamWrapper osw(ofs);
 
 			rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
