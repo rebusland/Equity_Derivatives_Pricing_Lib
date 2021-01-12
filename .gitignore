@@ -1,4 +1,5 @@
 build/
+output/
 
 #CMake files
 CMakeFiles/
