@@ -33,9 +33,10 @@ class GaussianVariatesGenerator : public UniVariateNumbersGenerator {
 		}
 
 		virtual std::unique_ptr<UniVariateNumbersGenerator> clone() const override {
-			return std::make_unique<GaussianVariatesGenerator>(*this);
+			// we use this form (instead of make_unique) in order to exploit the private constructor
+			return std::unique_ptr<GaussianVariatesGenerator>(new GaussianVariatesGenerator(*this));
 		}
-	
+
 		void SetSeed(double seed) override {
 			// this does not actually have any effect, it's done just for consistency
 			UniVariateNumbersGenerator::SetSeed(seed);
@@ -44,6 +45,14 @@ class GaussianVariatesGenerator : public UniVariateNumbersGenerator {
 		}
 
 	private:
+		// private copy constructor for the sole purpose of cloning: we have to assure that it is not copied the reference
+		// to the normal_variate_generator_func otherwise the very same rng would be used by the clone. We have to guarantee
+		// that a new functional wrapper to the generator (but with the same characteristics) is assigned to the clone
+		GaussianVariatesGenerator(const GaussianVariatesGenerator& gen) : UniVariateNumbersGenerator(gen.m_sequence_size, gen.m_seed) {
+			// the default copy constructor would have copied the functional wrapper's reference, instead of creating a brand new one.
+			m_normal_variates_generator_func = std::bind(std::ref(m_normal_distr), std::ref(m_uniform_rng));
+		}
+
 		// Park-Miller linear_congruential_engine
 		std::minstd_rand m_uniform_rng;
 
