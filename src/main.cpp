@@ -61,7 +61,8 @@ constexpr unsigned int NUM_THREAD = 4;
 int main() {
 	_TIMER_MILLIS_(myTimer);
 
-	AsianOption asianOption = JSONReader::ReadAsianOption();
+	std::unique_ptr<Derivative> derivativePtr = JSONReader::ReadProduct();
+	AsianOption asianOption = *(dynamic_cast<AsianOption*>(derivativePtr.get()));
 
 	auto flatMktData = JSONReader::ReadFlatMarketData();
 	double r = flatMktData.m_rf_rate;

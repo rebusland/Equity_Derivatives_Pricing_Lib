@@ -2,6 +2,7 @@
 #define _JSON_READER_H_
 
 #include <fstream>
+#include <memory>
 
 // RAPIDJSON
 #include "rapidjson/document.h"
@@ -11,6 +12,7 @@
 #include "AsianOption.h"
 #include "FlatMarketData.h"
 #include "MonteCarloSettings.h"
+#include "VanillaOption.h"
 
 #include "ProjectException.h"
 
@@ -34,60 +36,6 @@ class JSONReader {
 			} else {
 				THROW_PROJECT_EXCEPTION("Invalid averaging type: " + avgTypeString);
 			}
-		}
-
-		/**
-		 * TODO
-		 * Create a more generic reader ReadProduct() which gathers all the info pertaining the
-		 * "Derivative" part of the product (issueDate, underlying etc.) and calls a specific reader
-		 * depending on the type of payoff: this method should return a polymorphic Derivative object
-		 * i.e. a pointer or smart pointer.
-		 */
-		static AsianOption ReadAsianOption() {
-			std::ifstream ifs("input/product.json");
-			rapidjson::IStreamWrapper isw(ifs);
-			rapidjson::Document doc;
-			doc.ParseStream(isw);
-
-			std::string alias = doc["underlying"]["alias"].GetString();
-			double refPrice = doc["underlying"]["spotPrice"].GetDouble();
-			double spotPrice = doc["underlying"]["refPrice"].GetDouble();
-
-			Underlying underlying{alias, refPrice, spotPrice};
-
-			_Date issueDate = doc["issueDate"].GetInt();
-			_Date expiryDate = doc["expiryDate"].GetInt();
-
-			const auto& asianOptionJSON = doc["asianOption"];
-
-			// CALL or PUT
-			CallPut callPut = ReadCallPut(asianOptionJSON["callPut"].GetString());
-
-			// STRIKE FIXING DATES
-			std::vector<_Date> strikeFixingDates;
-			auto& strikeDatesVal = asianOptionJSON["strikeFixingDates"];
-			for (const auto& dateVal : strikeDatesVal.GetArray()) {
-				strikeFixingDates.push_back(dateVal.GetInt());
-			}
-
-			// PRICE FIXING DATES
-			std::vector<_Date> priceFixingDates;
-			auto& priceDatesVal = asianOptionJSON["priceFixingDates"];
-			for (const auto& dateVal : priceDatesVal.GetArray()) {
-				priceFixingDates.push_back(dateVal.GetInt());
-			}
-
-			// AVG TYPE STRIKE
-			AvgType avgTypeStrike = ReadAvgType(asianOptionJSON["avgTypeStrike"].GetString());
-
-			// AVG TYPE PRICE
-			AvgType avgTypePrice = ReadAvgType(asianOptionJSON["avgTypePrice"].GetString());
-
-			return 	AsianOption{
-				underlying, issueDate, expiryDate,
-				callPut, strikeFixingDates, avgTypeStrike,
-				priceFixingDates, avgTypePrice
-			};
 		}
 
 		static FlatMarketData ReadFlatMarketData() {
@@ -134,6 +82,85 @@ class JSONReader {
 				varianceReduction,
 				doc["nSimulations"].GetUint64()
 			};
+		}
+
+		static std::unique_ptr<Derivative> ReadProduct() {
+			std::ifstream ifs("input/product.json");
+			rapidjson::IStreamWrapper isw(ifs);
+			rapidjson::Document doc;
+			doc.ParseStream(isw);
+
+			if (doc.HasMember("asianOption")) {
+				return ReadAsianOption(doc);
+
+			} else if (doc.HasMember("vanillaOption")) {
+				return ReadVanillaOption(doc);
+
+			} else {
+				THROW_PROJECT_EXCEPTION("Missing specif type in product's json");
+			}
+		}
+
+		static std::unique_ptr<Derivative> ReadDerivative(const rapidjson::Document& doc) {
+			std::string alias = doc["underlying"]["alias"].GetString();
+			double refPrice = doc["underlying"]["spotPrice"].GetDouble();
+			double spotPrice = doc["underlying"]["refPrice"].GetDouble();
+
+			_Date issueDate = doc["issueDate"].GetInt();
+			_Date expiryDate = doc["expiryDate"].GetInt();
+
+			return std::make_unique<Derivative>(Underlying{alias, refPrice, spotPrice}, issueDate, expiryDate);
+		}
+
+		static std::unique_ptr<VanillaOption> ReadVanillaOption(const rapidjson::Document& doc) {
+			std::unique_ptr<Derivative> derivativePart = ReadDerivative(doc);
+
+			const auto& vanillaOptionJSON = doc["vanillaOption"];
+
+			// CALL or PUT
+			CallPut callPut = ReadCallPut(vanillaOptionJSON["callPut"].GetString());
+			double strike = vanillaOptionJSON["strike"].GetDouble();
+
+			return std::make_unique<VanillaOption>(
+				derivativePart->m_underlying, derivativePart->m_issue_date, derivativePart->m_expiry_date,
+				callPut, strike
+			);
+		}
+
+		static std::unique_ptr<AsianOption> ReadAsianOption(const rapidjson::Document& doc) {
+			std::unique_ptr<Derivative> derivativePart = ReadDerivative(doc);
+
+			const auto& asianOptionJSON = doc["asianOption"];
+
+			// CALL or PUT
+			CallPut callPut = ReadCallPut(asianOptionJSON["callPut"].GetString());
+
+			// STRIKE FIXING DATES
+			std::vector<_Date> strikeFixingDates;
+			auto& strikeDatesVal = asianOptionJSON["strikeFixingDates"];
+			for (const auto& dateVal : strikeDatesVal.GetArray()) {
+				strikeFixingDates.push_back(dateVal.GetInt());
+			}
+
+			// PRICE FIXING DATES
+			std::vector<_Date> priceFixingDates;
+			auto& priceDatesVal = asianOptionJSON["priceFixingDates"];
+			for (const auto& dateVal : priceDatesVal.GetArray()) {
+				priceFixingDates.push_back(dateVal.GetInt());
+			}
+
+			// AVG TYPE STRIKE
+			AvgType avgTypeStrike = ReadAvgType(asianOptionJSON["avgTypeStrike"].GetString());
+
+			// AVG TYPE PRICE
+			AvgType avgTypePrice = ReadAvgType(asianOptionJSON["avgTypePrice"].GetString());
+
+			// TODO create constructor to accept a whole derivative objec
+			return std::make_unique<AsianOption>(
+				derivativePart->m_underlying, derivativePart->m_issue_date, derivativePart->m_expiry_date,
+				callPut, strikeFixingDates, avgTypeStrike,
+				priceFixingDates, avgTypePrice
+			);
 		}
 };
 
