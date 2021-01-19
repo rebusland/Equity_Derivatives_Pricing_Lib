@@ -13,12 +13,13 @@ class AsianOption : public Derivative {
 			const Underlying& underlying,
 			const _Date& issueDate,
 			const _Date& expiryDate,
+			std::string payoffId,
 			const CallPut& callPut,
 			const std::vector<_Date>& strikeFixingDates,
 			const AvgType& strikeAvgType,
 			const std::vector<_Date> priceFixingDates,
 			const AvgType& priceAvgType
-		) : Derivative(underlying, issueDate, expiryDate), m_call_put{callPut},
+		) : Derivative(underlying, issueDate, expiryDate, payoffId), m_call_put{callPut},
 		m_strike_fixing_dates{strikeFixingDates}, m_avg_type_strike{strikeAvgType},
 		m_price_fixing_dates{priceFixingDates}, m_avg_type_price{priceAvgType} {}
 

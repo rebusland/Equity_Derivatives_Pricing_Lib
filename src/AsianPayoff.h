@@ -20,7 +20,7 @@ using _Date = long;
  */
 class AsianPayoff : public Payoff {
 	public:
-		AsianPayoff(const AsianOption& asianOption, double discountFactor);
+		AsianPayoff(const AsianOption& asianOption, const std::vector<double>& discounts);
 		~AsianPayoff() {}
 
 		double operator() (const std::vector<double>& relevantSpotPrices) const override;
@@ -28,7 +28,6 @@ class AsianPayoff : public Payoff {
 
 	private:
 		const AsianOption m_asian_option;
-		const double m_discount;
 
 		std::function<double (double, double)> m_final_vanilla_payoff;
 

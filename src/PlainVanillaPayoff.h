@@ -16,7 +16,12 @@ using _Date = long;
 template<CallPut>
 class PlainVanillaPayoff : public Payoff {
 	public:
-		PlainVanillaPayoff(_Date expiryDate, double strike) : m_strike{strike} {
+		PlainVanillaPayoff(
+			const std::vector<double>& discounts,
+			_Date expiryDate,
+			double strike
+		) : Payoff(discounts),
+			m_strike{strike} {
 			m_flattened_observation_dates.push_back(expiryDate);
 		}
 
@@ -30,12 +35,12 @@ class PlainVanillaPayoff : public Payoff {
 
 template<>
 inline double PlainVanillaPayoff<CallPut::CALL>::operator() (const std::vector<double>& spotPrices) const {
-	return std::max(0.0, spotPrices[0] - m_strike);
+	return m_discounts[0] * std::max(0.0, spotPrices[0] - m_strike);
 }
 
 template<>
 inline double PlainVanillaPayoff<CallPut::PUT>::operator() (const std::vector<double>& spotPrices) const {
-	return std::max(0.0, m_strike - spotPrices[0]);
+	return m_discounts[0] * std::max(0.0, m_strike - spotPrices[0]);
 }
 
 #endif

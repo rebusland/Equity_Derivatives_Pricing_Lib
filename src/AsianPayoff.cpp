@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <iostream>
 
-AsianPayoff::AsianPayoff(const AsianOption& asianOption, double discountFactor) :
+AsianPayoff::AsianPayoff(const AsianOption& asianOption, const std::vector<double>& discounts) :
+	Payoff(discounts),
 	m_asian_option{asianOption},
-	m_discount{discountFactor},
 	m_n_strike_observations{m_asian_option.GetStrikeFixingDates().size()},
 	m_n_final_ref_value_observations{m_asian_option.GetPriceFixingDates().size()},
 	m_strike_avg{0.0, m_asian_option.m_avg_type_strike},
@@ -66,5 +66,5 @@ double AsianPayoff::operator() (const std::vector<double>& relevantSpotPrices) c
 
 	// TODO return cash flow instead and apply discount in the caller code (?)
 	// end of the path: evaluate the payoff and discount back
-	return m_discount * m_final_vanilla_payoff(strike, avgPrice);
+	return m_discounts[0] * m_final_vanilla_payoff(strike, avgPrice);
 }

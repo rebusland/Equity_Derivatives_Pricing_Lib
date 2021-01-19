@@ -14,6 +14,8 @@ using _Date = long;
  */
 class Payoff {
 	public:
+		Payoff(const std::vector<double>& discounts) : m_discounts(discounts) {}
+
 		virtual double operator() (const std::vector<double>& relevantSpotPrices) const = 0;
 
 		/**
@@ -27,6 +29,9 @@ class Payoff {
 
 		// the relevant observation dates to pass to MonteCarlo simulator
 		std::vector<_Date> m_flattened_observation_dates;
+
+	protected:
+		const std::vector<double> m_discounts;
 };
 
 #endif

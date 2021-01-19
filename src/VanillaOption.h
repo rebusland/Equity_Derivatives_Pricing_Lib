@@ -10,9 +10,10 @@ class VanillaOption : public Derivative {
 			const Underlying& underlying,
 			const _Date& issueDate,
 			const _Date& expiryDate,
+			std::string payoffId,
 			const CallPut& callPut,
 			double strike
-		) : Derivative(underlying, issueDate, expiryDate), m_call_put{callPut}, m_strike{strike} {}
+		) : Derivative(underlying, issueDate, expiryDate, payoffId), m_call_put{callPut}, m_strike{strike} {}
 
 		const CallPut m_call_put;
 		const double m_strike;

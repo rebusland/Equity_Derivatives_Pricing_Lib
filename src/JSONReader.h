@@ -109,7 +109,14 @@ class JSONReader {
 			_Date issueDate = doc["issueDate"].GetInt();
 			_Date expiryDate = doc["expiryDate"].GetInt();
 
-			return std::make_unique<Derivative>(Underlying{alias, refPrice, spotPrice}, issueDate, expiryDate);
+			std::string payoffId = doc["payoffId"].GetString();
+
+			return std::make_unique<Derivative>(
+				Underlying{alias, refPrice, spotPrice},
+				issueDate,
+				expiryDate,
+				payoffId
+			);
 		}
 
 		static std::unique_ptr<VanillaOption> ReadVanillaOption(const rapidjson::Document& doc) {
@@ -122,8 +129,12 @@ class JSONReader {
 			double strike = vanillaOptionJSON["strike"].GetDouble();
 
 			return std::make_unique<VanillaOption>(
-				derivativePart->m_underlying, derivativePart->m_issue_date, derivativePart->m_expiry_date,
-				callPut, strike
+				derivativePart->m_underlying,
+				derivativePart->m_issue_date,
+				derivativePart->m_expiry_date,
+				derivativePart->m_payoff_id,
+				callPut,
+				strike
 			);
 		}
 
@@ -157,9 +168,15 @@ class JSONReader {
 
 			// TODO create constructor to accept a whole derivative objec
 			return std::make_unique<AsianOption>(
-				derivativePart->m_underlying, derivativePart->m_issue_date, derivativePart->m_expiry_date,
-				callPut, strikeFixingDates, avgTypeStrike,
-				priceFixingDates, avgTypePrice
+				derivativePart->m_underlying,
+				derivativePart->m_issue_date,
+				derivativePart->m_expiry_date,
+				derivativePart->m_payoff_id,
+				callPut,
+				strikeFixingDates,
+				avgTypeStrike,
+				priceFixingDates,
+				avgTypePrice
 			);
 		}
 };
