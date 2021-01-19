@@ -28,8 +28,15 @@
 
 // TODO use unsigned long instead?
 using _Date = long;
-using _StatePayoffFunc = std::function<double (double)>;
-using _PathDependentPayoffFunc = std::function<double (const std::vector<double>&)>;
+
+/*
+ * IMPORTANT:
+ * The same functional wrapper is used for both path dependent and "State"
+ * (i.e. depending only on spot price at expiry) payoffs. Thus, when defining State payoffs
+ * we have to artificially use a vector of 1 spot price in contrast to a scalar. This should not affect
+ * the performance that much in evaluating the MonteCarlo scenarios, but it simplifies a lot the code.
+ */
+using _PayoffFunc = std::function<double (const std::vector<double>&)>;
 
 // TODO IMPORTANT: we assume that the minimum time step is a single day.
 // This is the time step used by default in the underlying SDE's equation, generating the MC paths.
@@ -80,27 +87,30 @@ int main() {
 	/*
 	 * Payoff function
 	 */
-	_StatePayoffFunc vanillaFunc;
+	_PayoffFunc payoffFunc;
 	using std::placeholders::_1;
-	/* 
-	 * NB: the CPP standard states that:
-	 * << The arguments to bind are copied or moved, and are never passed by reference unless
-	 * wrapped in std::ref or std::cref>>
-	 */
+	std::vector<_Date> payoffObservations;
+
+	/*
+	// european plain vanilla
 	if (asianOption.m_call_put == CallPut::CALL) {
-		auto vanillaCall = PlainVanillaPayoff<CallPut::CALL>(10.0);
-		vanillaFunc = std::bind(&PlainVanillaPayoff<CallPut::CALL>::operator(), vanillaCall, _1);
+		auto vanillaCall = PlainVanillaPayoff<CallPut::CALL>(asianOption.m_expiry_date, 10.0);
+		payoffFunc = std::bind(&PlainVanillaPayoff<CallPut::CALL>::operator(), vanillaCall, _1);
+		payoffObservations = vanillaCall.m_flattened_observation_dates;
 
 	} else {
-		auto vanillaPut = PlainVanillaPayoff<CallPut::PUT>(10.0);
-		vanillaFunc = std::bind(&PlainVanillaPayoff<CallPut::PUT>::operator(), vanillaPut, _1);
+		auto vanillaPut = PlainVanillaPayoff<CallPut::PUT>(asianOption.m_expiry_date, 10.0);
+		payoffFunc = std::bind(&PlainVanillaPayoff<CallPut::PUT>::operator(), vanillaPut, _1);
+		payoffObservations = vanillaPut.m_flattened_observation_dates;
 	}
+	*/
 
+	// asian payoff
 	AsianPayoff asianPayoff{asianOption, discountFactor};
-	const std::vector<_Date> payoffObservations = asianPayoff.m_flattened_observation_dates;
-	const unsigned int payoffObsSize = payoffObservations.size();
+	payoffObservations = asianPayoff.m_flattened_observation_dates;
+	payoffFunc = std::bind(&AsianPayoff::operator(), asianPayoff, _1);
 
-	_PathDependentPayoffFunc asianPayoffFunc = std::bind(&AsianPayoff::operator(), asianPayoff, _1);
+	const unsigned int payoffObsSize = payoffObservations.size();
 
 	/*
 	 * Random numbers generators and stochastic process generator
@@ -111,19 +121,20 @@ int main() {
 	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGeneratorAntithetic = 
 		std::make_unique<AntitheticWrapperUniVariateGenerator>(payoffObsSize, gaussianVariatesGenerator->clone());
 
-	std::unique_ptr<CompositeStatisticsGatherer> compositeStatGatherer(new CompositeStatisticsGatherer());
-	compositeStatGatherer
-		->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
-		// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>());
-
 	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
 		payoffObservations,
-		// std::vector<_Date>(1, asianOption.m_expiry_date),
 		asianOption.m_underlying.GetReferencePrice(),
 		r, vola,
 		normalVariateGeneratorAntithetic->clone()
 	);
 
+	/*
+	 * Statistics gatherers
+	 */
+	std::unique_ptr<CompositeStatisticsGatherer> compositeStatGatherer(new CompositeStatisticsGatherer());
+	compositeStatGatherer
+		->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
+		// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>());
 
 	/*
 	 * Start multi-threading routine
@@ -140,17 +151,16 @@ int main() {
 	std::vector<std::thread> thread_vec;
 	int thread_seed = 1;
 	for (const auto& statGatherer : statisticsGatherers) {
-		// TODO try also the case with _StatePayoffFunc!
 		std::unique_ptr<StochasticPathGenerator> pathGenerator = geomBrownMotionGenerator->clone();
 
 		// TODO: find a cleaner and more reasoned way to set the seed in each thread
 		pathGenerator->SetVariateGeneratorSeed(thread_seed++);
 
-		MonteCarloEngine<_PathDependentPayoffFunc> mcEngine{
+		MonteCarloEngine mcEngine{
 			N_SIMUL_PER_THREAD,
 			payoffObsSize,
 			std::move(pathGenerator),
-			asianPayoffFunc,
+			payoffFunc,
 			statGatherer.get()
 		};
 		thread_vec.emplace_back(std::move(mcEngine));

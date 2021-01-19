@@ -1,28 +1,41 @@
 #ifndef _PLAIN_VANILLA_PAYOFF_H_
 #define _PLAIN_VANILLA_PAYOFF_H_
 
-#include<algorithm>
+#include "Payoff.h"
+
+#include <algorithm>
+#include <vector>
 
 #include "CallPut.h"
 
+using _Date = long;
+
+/**
+ * European plain vanilla
+ */
 template<CallPut>
-class PlainVanillaPayoff {
+class PlainVanillaPayoff : public Payoff {
 	public:
-		PlainVanillaPayoff(double strike) : m_strike{strike} {}
-		double operator() (double S) const;
+		PlainVanillaPayoff(_Date expiryDate, double strike) : m_strike{strike} {
+			m_flattened_observation_dates.push_back(expiryDate);
+		}
+
+		double operator() (const std::vector<double>& spotPrices) const override;
+
+		void FillFlattenedObservationDates() override {/* Nothing to be done for a "maturity-only" payoff */}
 
 	private:
 		const double m_strike;
 };
 
 template<>
-inline double PlainVanillaPayoff<CallPut::CALL>::operator() (double S) const {
-	return std::max(0.0, S - m_strike);
+inline double PlainVanillaPayoff<CallPut::CALL>::operator() (const std::vector<double>& spotPrices) const {
+	return std::max(0.0, spotPrices[0] - m_strike);
 }
 
 template<>
-inline double PlainVanillaPayoff<CallPut::PUT>::operator() (double S) const {
-	return std::max(0.0, m_strike - S);
+inline double PlainVanillaPayoff<CallPut::PUT>::operator() (const std::vector<double>& spotPrices) const {
+	return std::max(0.0, m_strike - spotPrices[0]);
 }
 
 #endif

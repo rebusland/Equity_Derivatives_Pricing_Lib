@@ -4,7 +4,7 @@
 #include <functional>
 
 #include "AsianOption.h"
-#include "PathDependentPayoff.h"
+#include "Payoff.h"
 #include "Utils.h"
 
 using _Date = long;
@@ -18,7 +18,7 @@ using _Date = long;
  * (as well as date sortings) is performed upstream.
  *
  */
-class AsianPayoff : public PathDependentPayoff {
+class AsianPayoff : public Payoff {
 	public:
 		AsianPayoff(const AsianOption& asianOption, double discountFactor);
 		~AsianPayoff() {}
