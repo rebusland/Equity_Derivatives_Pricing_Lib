@@ -16,7 +16,8 @@
  */
 class GaussianVariatesGenerator : public UniVariateNumbersGenerator {
 	public:
-		GaussianVariatesGenerator(unsigned int seqSize) : UniVariateNumbersGenerator(seqSize) {
+		GaussianVariatesGenerator(unsigned int seqSize, double seed = 1)
+			: UniVariateNumbersGenerator(seqSize, seed) {
 			// NB it's important to pass the distribution and the rng by reference
 			m_normal_variates_generator_func = std::bind(std::ref(m_normal_distr), std::ref(m_uniform_rng));
 		}
@@ -32,7 +33,7 @@ class GaussianVariatesGenerator : public UniVariateNumbersGenerator {
 			return numberSequence;		
 		}
 
-		virtual std::unique_ptr<UniVariateNumbersGenerator> clone() const override {
+		virtual std::unique_ptr<UniVariateNumbersGenerator> Clone() const override {
 			// we use this form (instead of make_unique) in order to exploit the private constructor
 			return std::unique_ptr<GaussianVariatesGenerator>(new GaussianVariatesGenerator(*this));
 		}

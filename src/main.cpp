@@ -91,13 +91,13 @@ int main() {
 		std::make_unique<GaussianVariatesGenerator>(payoffObsSize);
 
 	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGeneratorAntithetic = 
-		std::make_unique<AntitheticWrapperUniVariateGenerator>(payoffObsSize, gaussianVariatesGenerator->clone());
+		std::make_unique<AntitheticWrapperUniVariateGenerator>(payoffObsSize, gaussianVariatesGenerator->Clone());
 
 	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
 		payoffObservations,
 		(derivativePtr->m_underlying).GetReferencePrice(),
 		r, vola,
-		normalVariateGeneratorAntithetic->clone()
+		normalVariateGeneratorAntithetic->Clone()
 	);
 
 	/*
@@ -123,7 +123,7 @@ int main() {
 	std::vector<std::thread> thread_vec;
 	int thread_seed = 1;
 	for (const auto& statGatherer : statisticsGatherers) {
-		std::unique_ptr<StochasticPathGenerator> pathGenerator = geomBrownMotionGenerator->clone();
+		std::unique_ptr<StochasticPathGenerator> pathGenerator = geomBrownMotionGenerator->Clone();
 
 		// TODO: find a cleaner and more reasoned way to set the seed in each thread
 		pathGenerator->SetVariateGeneratorSeed(thread_seed++);

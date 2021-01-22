@@ -41,7 +41,7 @@ class Discounter {
 
 			std::transform(paymentDates.begin(), paymentDates.end(), discounts.begin(), f_single_discount);
 			return discounts;
-		 }
+		}
 };
 
 #endif

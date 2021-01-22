@@ -97,7 +97,7 @@ class JSONReader {
 				return ReadVanillaOption(doc);
 
 			} else {
-				THROW_PROJECT_EXCEPTION("Missing specif type in product's json");
+				THROW_PROJECT_EXCEPTION("Missing specific type in product's json");
 			}
 		}
 

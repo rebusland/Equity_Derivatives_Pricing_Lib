@@ -14,7 +14,7 @@
  */
 class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 	public:
-		// TODO implement the factory pattern to reduce this mess of constructors
+		// TODO implement the builder pattern to reduce this mess of constructors
 		AntitheticWrapperUniVariateGenerator(
 			unsigned int seqSize,
 			double seed,
@@ -60,11 +60,11 @@ class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 			m_inner_generator->SetSeed(seed);
 		}
 
-		std::unique_ptr<UniVariateNumbersGenerator> clone() const override {
+		std::unique_ptr<UniVariateNumbersGenerator> Clone() const override {
 			return std::make_unique<AntitheticWrapperUniVariateGenerator>(
 				m_sequence_size,
 				m_seed,
-				m_inner_generator->clone(),
+				m_inner_generator->Clone(),
 				m_antithetic_mapping_rule
 			);
 		}

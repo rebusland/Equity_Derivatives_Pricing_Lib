@@ -18,8 +18,8 @@ using generator_func = std::function<double ()>;
  */
 class FunctionalWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 	public:
-		FunctionalWrapperUniVariateGenerator(unsigned int seqSize, generator_func generator) :
-			UniVariateNumbersGenerator(seqSize),
+		FunctionalWrapperUniVariateGenerator(generator_func generator, unsigned int seqSize, double seed=1) :
+			UniVariateNumbersGenerator(seqSize, seed),
 			m_generator{generator} {}
 
 		double GenerateOne() override {
@@ -33,7 +33,7 @@ class FunctionalWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 			return numberSequence;
 		}
 
-		std::unique_ptr<UniVariateNumbersGenerator> clone() const override {
+		std::unique_ptr<UniVariateNumbersGenerator> Clone() const override {
 			return std::make_unique<FunctionalWrapperUniVariateGenerator>(*this);
 		}
 
