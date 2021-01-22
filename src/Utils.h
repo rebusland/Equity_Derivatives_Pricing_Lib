@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "AvgType.h"
+#include "CallPut.h"
 
 /**
  *	TODO:
@@ -27,6 +28,11 @@ namespace Utils {
 			unsigned int m_counter = 0; // counts the number of elements which are averaged
 			AvgType m_avg_type;
 	};
+
+	// TODO move mapping utilities in a separate environment/namespace (?)
+	static int FromCallPutEnumToInt(const CallPut& callPut) {
+		return callPut == CallPut::CALL ? 1 : -1;
+	}
 }
 
 #endif

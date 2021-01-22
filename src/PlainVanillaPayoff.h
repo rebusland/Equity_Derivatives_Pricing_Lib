@@ -4,43 +4,44 @@
 #include "Payoff.h"
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 
 #include "CallPut.h"
+#include "Utils.h"
+#include "VanillaOption.h"
 
 using _Date = long;
 
 /**
  * European plain vanilla
  */
-template<CallPut>
 class PlainVanillaPayoff : public Payoff {
 	public:
-		PlainVanillaPayoff(
-			const std::vector<double>& discounts,
-			_Date expiryDate,
-			double strike
-		) : Payoff(discounts),
-			m_strike{strike} {
-			m_flattened_observation_dates.push_back(expiryDate);
+		void FillFlattenedObservationDates() override {/* Nothing to be done */}
+
+		double operator() (const std::vector<double>& spotPrices) const override {
+			return m_discounts[0] * std::max(0.0, m_call_put_flag * (spotPrices[0] - m_strike));
 		}
 
-		double operator() (const std::vector<double>& spotPrices) const override;
-
-		void FillFlattenedObservationDates() override {/* Nothing to be done for a "maturity-only" payoff */}
+		std::unique_ptr<Payoff> Clone() const override {
+			return std::make_unique<PlainVanillaPayoff>(*this);
+		}
 
 	private:
+		friend class PayoffFactory;
+
+		PlainVanillaPayoff(
+			const VanillaOption& vanillaOption,
+			const std::vector<double>& discounts
+		) : Payoff(discounts),
+			m_strike{vanillaOption.m_strike},
+			m_call_put_flag {Utils::FromCallPutEnumToInt(vanillaOption.m_call_put)} {
+			m_flattened_observation_dates.push_back(vanillaOption.m_expiry_date);
+		}
+
 		const double m_strike;
+		const int m_call_put_flag;
 };
-
-template<>
-inline double PlainVanillaPayoff<CallPut::CALL>::operator() (const std::vector<double>& spotPrices) const {
-	return m_discounts[0] * std::max(0.0, spotPrices[0] - m_strike);
-}
-
-template<>
-inline double PlainVanillaPayoff<CallPut::PUT>::operator() (const std::vector<double>& spotPrices) const {
-	return m_discounts[0] * std::max(0.0, m_strike - spotPrices[0]);
-}
 
 #endif

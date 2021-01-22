@@ -4,7 +4,7 @@
 
 #include "Utils.h"
 
-using namespace Utils;
+using Utils::RollingAverage;
 
 #define MOMENTS_STRING "Moments"
 

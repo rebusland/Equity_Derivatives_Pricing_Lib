@@ -9,9 +9,8 @@
 #include <vector>
 
 #include "AntitheticWrapperUniVariateGenerator.h"
-#include "AsianOption.h"
-#include "AsianPayoff.h"
 #include "CompositeStatisticsGatherer.h"
+#include "Derivative.h"
 #include "Discounter.h"
 #include "FullSampleGatherer.h"
 #include "FunctionalWrapperUniVariateGenerator.h"
@@ -21,22 +20,12 @@
 #include "MomentsEvaluator.h"
 #include "MonteCarloEngine.h"
 #include "MonteCarloSettings.h"
-#include "PlainVanillaPayoff.h"
+#include "PayoffFactory.h"
 #include "Timer.h"
-#include "Underlying.h"
 #include "UniVariateNumbersGenerator.h"
 
 // TODO use unsigned long instead?
 using _Date = long;
-
-/*
- * IMPORTANT:
- * The same functional wrapper is used for both path dependent and "State"
- * (i.e. depending only on spot price at expiry) payoffs. Thus, when defining State payoffs
- * we have to artificially use a vector of 1 spot price in contrast to a scalar. This should not affect
- * the performance that much in evaluating the MonteCarlo scenarios, but it simplifies a lot the code.
- */
-using _PayoffFunc = std::function<double (const std::vector<double>&)>;
 
 // TODO IMPORTANT: we assume that the minimum time step is a single day.
 // This is the time step used by default in the underlying SDE's equation, generating the MC paths.
@@ -62,21 +51,19 @@ int main() {
 	_TIMER_MILLIS_(myTimer);
 
 	std::unique_ptr<Derivative> derivativePtr = JSONReader::ReadProduct();
-	AsianOption asianOption = *(dynamic_cast<AsianOption*>(derivativePtr.get()));
 
 	auto flatMktData = JSONReader::ReadFlatMarketData();
 	double r = flatMktData.m_rf_rate;
 	double vola = flatMktData.m_vola;
 
-	const double discountFactor = Discounter::Discount(VALUE_DATE, asianOption.m_expiry_date, r);
+	const double discountFactor = Discounter::Discount(VALUE_DATE, derivativePtr->m_expiry_date, r);
 
 	MonteCarloSettings mcSettings = JSONReader::ReadMonteCarloSettings();
 	const unsigned long long NUM_SIMUL = mcSettings.GetNumSimulations();
 
 	// TMP Print some inputs to check the consistency of final results
-	std::cout << "\n" << "Time to expiration (days): " << asianOption.m_expiry_date - asianOption.m_issue_date << "\n";
-	std::cout << "Option side: " << (asianOption.m_call_put == CallPut::CALL ? "Call" : "Put") << "\n";
-	std::cout << "Underlying price: " << asianOption.m_underlying.GetReferencePrice() << "\n";
+	std::cout << "\n" << "Time to expiration (days): " << derivativePtr->m_expiry_date - derivativePtr->m_issue_date << "\n";
+	std::cout << "Underlying price: " << derivativePtr->m_underlying.GetReferencePrice() << "\n";
 	// from here onwards, doubles are printed with 15 significant digits
 	std::cout << std::setprecision(15);
 	std::cout << "Discount factor: " << discountFactor << "\n";
@@ -88,28 +75,12 @@ int main() {
 	/*
 	 * Payoff function
 	 */
-	_PayoffFunc payoffFunc;
-	using std::placeholders::_1;
-	std::vector<_Date> payoffObservations;
-
-	/*
-	// european plain vanilla
-	if (asianOption.m_call_put == CallPut::CALL) {
-		auto vanillaCall = PlainVanillaPayoff<CallPut::CALL>(asianOption.m_expiry_date, 10.0);
-		payoffFunc = std::bind(&PlainVanillaPayoff<CallPut::CALL>::operator(), vanillaCall, _1);
-		payoffObservations = vanillaCall.m_flattened_observation_dates;
-
-	} else {
-		auto vanillaPut = PlainVanillaPayoff<CallPut::PUT>(asianOption.m_expiry_date, 10.0);
-		payoffFunc = std::bind(&PlainVanillaPayoff<CallPut::PUT>::operator(), vanillaPut, _1);
-		payoffObservations = vanillaPut.m_flattened_observation_dates;
-	}
-	*/
-
-	// asian payoff
-	AsianPayoff asianPayoff{asianOption, discountFactor};
-	payoffObservations = asianPayoff.m_flattened_observation_dates;
-	payoffFunc = std::bind(&AsianPayoff::operator(), asianPayoff, _1);
+	auto payoff = PayoffFactory::GetInstance().CreatePayoff(
+		derivativePtr->m_payoff_id,
+		derivativePtr.get(),
+		std::vector<double>(1, discountFactor)
+	);
+	std::vector<_Date> payoffObservations = payoff->m_flattened_observation_dates;
 
 	const unsigned int payoffObsSize = payoffObservations.size();
 
@@ -124,7 +95,7 @@ int main() {
 
 	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
 		payoffObservations,
-		asianOption.m_underlying.GetReferencePrice(),
+		(derivativePtr->m_underlying).GetReferencePrice(),
 		r, vola,
 		normalVariateGeneratorAntithetic->clone()
 	);
@@ -161,7 +132,7 @@ int main() {
 			N_SIMUL_PER_THREAD,
 			payoffObsSize,
 			std::move(pathGenerator),
-			payoffFunc,
+			payoff->Clone(),
 			statGatherer.get()
 		};
 		thread_vec.emplace_back(std::move(mcEngine));

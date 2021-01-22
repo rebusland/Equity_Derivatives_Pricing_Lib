@@ -1,10 +1,11 @@
 #ifndef _ASIAN_PAYOFF_H_
 #define _ASIAN_PAYOFF_H_
 
-#include <functional>
+#include "Payoff.h"
+
+#include <memory>
 
 #include "AsianOption.h"
-#include "Payoff.h"
 #include "Utils.h"
 
 using _Date = long;
@@ -20,18 +21,20 @@ using _Date = long;
  */
 class AsianPayoff : public Payoff {
 	public:
-		AsianPayoff(const AsianOption& asianOption, const std::vector<double>& discounts);
-		~AsianPayoff() {}
-
-		double operator() (const std::vector<double>& relevantSpotPrices) const override;
 		void FillFlattenedObservationDates() override;
+		double operator() (const std::vector<double>& relevantSpotPrices) const override;
+		std::unique_ptr<Payoff> Clone() const override;
 
 	private:
+		friend class PayoffFactory;
+
+		AsianPayoff(const AsianOption& asianOption, const std::vector<double>& discounts);
+
+		// create a copy: we don't know the lifecycle of the original object
 		const AsianOption m_asian_option;
 
-		std::function<double (double, double)> m_final_vanilla_payoff;
-
 		// preallocate useful variables to evaluate the payoff
+		const int m_call_put_flag;
 		const size_t m_n_strike_observations;
 		const size_t m_n_final_ref_value_observations;
 		mutable Utils::RollingAverage m_strike_avg;
