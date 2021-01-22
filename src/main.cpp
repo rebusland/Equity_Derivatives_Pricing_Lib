@@ -8,13 +8,10 @@
 #include <thread>
 #include <vector>
 
-#include "AntitheticWrapperUniVariateGenerator.h"
 #include "CompositeStatisticsGatherer.h"
 #include "Derivative.h"
 #include "Discounter.h"
 #include "FullSampleGatherer.h"
-#include "FunctionalWrapperUniVariateGenerator.h"
-#include "GaussianVariatesGenerator.h"
 #include "GBMPathGenerator.h"
 #include "JSONReader.h"
 #include "MomentsEvaluator.h"
@@ -23,6 +20,7 @@
 #include "PayoffFactory.h"
 #include "Timer.h"
 #include "UniVariateNumbersGenerator.h"
+#include "UniVariateNumbersGeneratorFactory.h"
 
 // TODO use unsigned long instead?
 using _Date = long;
@@ -59,7 +57,10 @@ int main() {
 	const double discountFactor = Discounter::Discount(VALUE_DATE, derivativePtr->m_expiry_date, r);
 
 	MonteCarloSettings mcSettings = JSONReader::ReadMonteCarloSettings();
-	const unsigned long long NUM_SIMUL = mcSettings.GetNumSimulations();
+	const double seed = mcSettings.m_seed;
+	const VariateGeneratorEnum generatorType = mcSettings.m_variate_generator_type;
+	const size_t NUM_SIMUL = mcSettings.m_num_simulations;
+	const bool shouldApplyAntitheticWrapper = (mcSettings.m_variance_reduction == VarianceReduction::ANTITHETIC);
 
 	// TMP Print some inputs to check the consistency of final results
 	std::cout << "\n" << "Time to expiration (days): " << derivativePtr->m_expiry_date - derivativePtr->m_issue_date << "\n";
@@ -87,17 +88,18 @@ int main() {
 	/*
 	 * Random numbers generators and stochastic process generator
 	 */
-	std::unique_ptr<UniVariateNumbersGenerator> gaussianVariatesGenerator = 
-		std::make_unique<GaussianVariatesGenerator>(payoffObsSize);
-
-	std::unique_ptr<UniVariateNumbersGenerator> normalVariateGeneratorAntithetic = 
-		std::make_unique<AntitheticWrapperUniVariateGenerator>(payoffObsSize, gaussianVariatesGenerator->Clone());
+	auto variateNumbersGenerator = UniVariateNumbersGeneratorFactory::GetInstance().CreateVariateGenerator(
+		generatorType,
+		shouldApplyAntitheticWrapper,
+		payoffObsSize,
+		seed
+	);
 
 	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
 		payoffObservations,
 		(derivativePtr->m_underlying).GetReferencePrice(),
 		r, vola,
-		normalVariateGeneratorAntithetic->Clone()
+		std::move(variateNumbersGenerator)
 	);
 
 	/*

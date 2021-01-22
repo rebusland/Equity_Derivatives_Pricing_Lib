@@ -77,7 +77,17 @@ class JSONReader {
 				THROW_PROJECT_EXCEPTION("Invalid variance reduction technique: " + varianceReductionString);
 			}
 
+			std::string generatorLabel = doc["variateGenerator"].GetString();
+			VariateGeneratorEnum generatorEnum;
+			if (generatorLabel == "STD_GAUSS") {
+				generatorEnum = VariateGeneratorEnum::STD_GAUSS;
+			} else {
+				THROW_PROJECT_EXCEPTION("Invalid variate generator type: " + generatorLabel);
+			}
+
 			return MonteCarloSettings{
+				generatorEnum,
+				doc["seed"].GetDouble(),
 				simulScheduler,
 				varianceReduction,
 				doc["nSimulations"].GetUint64()

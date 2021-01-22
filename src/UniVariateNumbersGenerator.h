@@ -4,6 +4,7 @@
 #include "Clonable.h"
 
 #include <memory>
+#include <vector>
 
 /**
  * Wrapper to an arbitrary number generator, providing a common interface to generate numbers for MonteCarlo simulations.

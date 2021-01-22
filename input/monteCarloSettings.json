@@ -1,5 +1,7 @@
 {
-	"simulationScheduler": "SEQUENTIAL",
-	"varianceReduction": "NONE",
-	"nSimulations": 10000
+	"variateGenerator": "STD_GAUSS",
+	"seed": 1,
+	"simulationScheduler": "MULTITHREAD",
+	"varianceReduction": "ANTITHETIC",
+	"nSimulations": 10000000
 }

@@ -58,6 +58,9 @@ class AntitheticWrapperUniVariateGenerator : public UniVariateNumbersGenerator {
 
 		void SetSeed(double seed) override {
 			m_inner_generator->SetSeed(seed);
+
+			// just for consistency purpose but it should have no effect
+			m_seed = seed;
 		}
 
 		std::unique_ptr<UniVariateNumbersGenerator> Clone() const override {
