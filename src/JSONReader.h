@@ -18,40 +18,16 @@
 
 class JSONReader {
 	public:
-		static CallPut ReadCallPut(const std::string& callPutString) {
-			if (callPutString == "CALL") {
-				return CallPut::CALL;
-			} else if (callPutString == "PUT") {
-				return CallPut::PUT;
-			} else {
-				THROW_PROJECT_EXCEPTION("Invalid option side: " + callPutString);
-			}
-		}
-
-		static AvgType ReadAvgType(const std::string& avgTypeString) {
-			if (avgTypeString == "ARITHMETIC") {
-				return AvgType::ARITHMETIC;
-			} else if (avgTypeString == "GEOMETRIC") {
-				return AvgType::GEOMETRIC;
-			} else {
-				THROW_PROJECT_EXCEPTION("Invalid averaging type: " + avgTypeString);
-			}
-		}
-
-		static FlatMarketData ReadFlatMarketData() {
-			std::ifstream ifs("input/flatMarketData.json");
-			rapidjson::IStreamWrapper isw(ifs);
+		static FlatMarketData ReadFlatMarketData(const std::string& flatMktDataString) {
 			rapidjson::Document doc;
-			doc.ParseStream(isw);
+			ParseString(doc, flatMktDataString);
 
 			return FlatMarketData{doc["rf_rate"].GetDouble(), doc["volatility"].GetDouble()};
 		}
 
-		static MonteCarloSettings ReadMonteCarloSettings() {
-			std::ifstream ifs("input/monteCarloSettings.json");
-			rapidjson::IStreamWrapper isw(ifs);
+		static MonteCarloSettings ReadMonteCarloSettings(const std::string& mcSettingsString) {
 			rapidjson::Document doc;
-			doc.ParseStream(isw);
+			ParseString(doc, mcSettingsString);
 
 			std::string simulSchedulString = doc["simulationScheduler"].GetString();
 			SimulationScheduler simulScheduler;
@@ -95,11 +71,9 @@ class JSONReader {
 			};
 		}
 
-		static std::unique_ptr<Derivative> ReadProduct() {
-			std::ifstream ifs("input/product.json");
-			rapidjson::IStreamWrapper isw(ifs);
+		static std::unique_ptr<Derivative> ReadProduct(const std::string& productString) {
 			rapidjson::Document doc;
-			doc.ParseStream(isw);
+			ParseString(doc, productString);
 
 			if (doc.HasMember("asianOption")) {
 				return ReadAsianOption(doc);
@@ -189,6 +163,35 @@ class JSONReader {
 				priceFixingDates,
 				avgTypePrice
 			);
+		}
+
+	private:
+		static void ParseString(rapidjson::Document& doc, const std::string& jsonStr) {
+			doc.Parse(jsonStr.c_str());
+
+			if (doc.HasParseError()) {
+				THROW_PROJECT_EXCEPTION("Error when parsing json string");
+			}
+		}
+
+		static CallPut ReadCallPut(const std::string& callPutString) {
+			if (callPutString == "CALL") {
+				return CallPut::CALL;
+			} else if (callPutString == "PUT") {
+				return CallPut::PUT;
+			} else {
+				THROW_PROJECT_EXCEPTION("Invalid option side: " + callPutString);
+			}
+		}
+
+		static AvgType ReadAvgType(const std::string& avgTypeString) {
+			if (avgTypeString == "ARITHMETIC") {
+				return AvgType::ARITHMETIC;
+			} else if (avgTypeString == "GEOMETRIC") {
+				return AvgType::GEOMETRIC;
+			} else {
+				THROW_PROJECT_EXCEPTION("Invalid averaging type: " + avgTypeString);
+			}
 		}
 };
 

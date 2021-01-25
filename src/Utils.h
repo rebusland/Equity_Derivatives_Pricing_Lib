@@ -1,6 +1,7 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
+#include <string>
 #include <vector>
 
 #include "AvgType.h"
@@ -30,9 +31,11 @@ namespace Utils {
 	};
 
 	// TODO move mapping utilities in a separate environment/namespace (?)
-	static int FromCallPutEnumToInt(const CallPut& callPut) {
+	inline int FromCallPutEnumToInt(const CallPut& callPut) {
 		return callPut == CallPut::CALL ? 1 : -1;
 	}
+
+	std::string ReadJsonFileAsString(const char* relativePathFileName);
 }
 
 #endif

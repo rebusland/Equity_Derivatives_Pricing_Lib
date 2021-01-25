@@ -1,7 +1,9 @@
 #include "Utils.h"
 
 #include <cmath>
+#include <fstream>
 #include <numeric>
+#include <sstream>
 
 double Utils::ComputeAverage(const std::vector<double>& data, const AvgType& avgType) {
 	unsigned int n = data.size();
@@ -48,4 +50,16 @@ double Utils::RollingAverage::GetAverage() const {
 void Utils::RollingAverage::ResetAverage(double resetValue) {
 	m_value = resetValue;
 	m_counter = 0;
+}
+
+std::string Utils::ReadJsonFileAsString(const char* relativePathFileName) {
+	std::ifstream f(relativePathFileName);
+	std::string str;
+	if(f) {
+		std::ostringstream ss;
+		ss << f.rdbuf();
+		str = ss.str();
+	}
+
+	return str;
 }
