@@ -10,7 +10,7 @@ message("Diagnostic info\n")
 project(EQPricer)
 
 # search all .h and .cpp source files through regexp
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/impl/*.cpp)
 
 # PROJECT TARGET
 # specify the project's target name and the sources to be built from
@@ -19,8 +19,11 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 # Add the given directories to those the compiler uses to search for include files,
 # when compiling the given target.
 # Relative paths are interpreted as relative to the current source directory.
-set(_PROJECT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third-party" CACHE STRING "Include directories for my project's target")
-target_include_directories(${PROJECT_NAME} PUBLIC ${_PROJECT_INCLUDE_DIR})
+set(
+	_PROJECT_INCLUDE_DIRS src/header "${CMAKE_SOURCE_DIR}/third-party" 
+	CACHE STRING "Include directories for my project's target"
+)
+target_include_directories(${PROJECT_NAME} PUBLIC ${_PROJECT_INCLUDE_DIRS})
 
 # NB Visual Studio already supports multiple build configurations (MINGW e.g. do not)
 # CMAKE_BUILD_TYPE only makes sense for single-target generators, like Makefiles. 
