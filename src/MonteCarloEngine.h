@@ -16,7 +16,6 @@ class MonteCarloEngine {
 	public:
 		MonteCarloEngine(
 			const size_t nSimul,
-			const size_t spotPricesSize,
 			std::unique_ptr<StochasticPathGenerator> stochasticPathGenerator,
 			std::unique_ptr<Payoff> payoff,
 			StatisticsGatherer* statisticsGatherer
@@ -25,7 +24,7 @@ class MonteCarloEngine {
 		m_payoff{std::move(payoff)},
 		m_statistics_gatherer{statisticsGatherer} {
 			// resize spot prices vector
-			m_spot_prices.resize(spotPricesSize);
+			m_spot_prices.resize(m_payoff->m_flattened_observation_dates.size());
 		}
 
 		void operator() () {
