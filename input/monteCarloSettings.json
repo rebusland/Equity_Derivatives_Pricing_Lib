@@ -2,6 +2,7 @@
 	"variateGenerator": "STD_GAUSS",
 	"seed": 1,
 	"simulationScheduler": "MULTITHREAD",
+	"nThreads": 4,
 	"varianceReduction": "ANTITHETIC",
 	"nSimulations": 10000000
 }

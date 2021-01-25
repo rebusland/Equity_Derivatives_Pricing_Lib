@@ -89,6 +89,7 @@ class JSONReader {
 				generatorEnum,
 				doc["seed"].GetDouble(),
 				simulScheduler,
+				doc["nThreads"].GetUint(),
 				varianceReduction,
 				doc["nSimulations"].GetUint64()
 			};

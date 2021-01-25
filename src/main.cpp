@@ -36,8 +36,6 @@ constexpr _Date VALUE_DATE = 0;
 // (the average number of trading days per year from 1990 to 2018 has been 251.86 for NYSE and NASDAQ)
 constexpr int TRAD_DAYS_PER_YEAR = 252;
 
-constexpr unsigned int NUM_THREAD = 4;
-
 /**
  * TODO:
  *  - implement the Builder pattern for constructing complex objects!!
@@ -60,6 +58,7 @@ int main() {
 	const double seed = mcSettings.m_seed;
 	const VariateGeneratorEnum generatorType = mcSettings.m_variate_generator_type;
 	const size_t NUM_SIMUL = mcSettings.m_num_simulations;
+	const unsigned int NUM_THREAD = mcSettings.m_n_threads;
 	const bool shouldApplyAntitheticWrapper = (mcSettings.m_variance_reduction == VarianceReduction::ANTITHETIC);
 
 	// TMP Print some inputs to check the consistency of final results
@@ -115,7 +114,7 @@ int main() {
 	 */
 
 	// TODO ignore rounding error (for a high number of simulations this is negligible)
-	const unsigned long long N_SIMUL_PER_THREAD = NUM_SIMUL / NUM_THREAD;
+	const size_t N_SIMUL_PER_THREAD = NUM_SIMUL / NUM_THREAD;
 
 	std::vector<std::unique_ptr<StatisticsGatherer>> statisticsGatherers;
 	for (unsigned int i = 0; i < NUM_THREAD; ++i) {

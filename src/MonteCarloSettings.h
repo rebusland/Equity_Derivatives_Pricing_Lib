@@ -25,17 +25,20 @@ class MonteCarloSettings {
 			VariateGeneratorEnum generatorType,
 			double seed,
 			const SimulationScheduler& simulationScheduler,
+			const unsigned int nThreads,
 			const VarianceReduction& varianceReduction,
 			unsigned long long numSimulations
 		) :	m_variate_generator_type{generatorType},
 			m_seed{seed},
 			m_simulation_scheduler{simulationScheduler},
+			m_n_threads{nThreads},
 			m_variance_reduction{varianceReduction},
 			m_num_simulations{numSimulations} {}
 
 		VariateGeneratorEnum m_variate_generator_type;
 		const double m_seed;
 		const SimulationScheduler m_simulation_scheduler;
+		const unsigned int m_n_threads;
 		const VarianceReduction m_variance_reduction;
 		const size_t m_num_simulations;
 };
