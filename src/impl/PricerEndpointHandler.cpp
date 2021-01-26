@@ -101,9 +101,9 @@ std::string PricerEndpointHandler::EvaluateBlack(
 		->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
 		// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>());
 
-	std::vector<std::unique_ptr<StatisticsGatherer>> statisticsGatherers;
+	std::vector<std::unique_ptr<StatisticsGatherer>> statisticsGatherersPerThread;
 	for (unsigned int i = 0; i < nThreads; ++i) {
-		statisticsGatherers.push_back(compositeStatGatherer->clone());
+		statisticsGatherersPerThread.push_back(compositeStatGatherer->clone());
 	}
 
 	/*
@@ -114,7 +114,7 @@ std::string PricerEndpointHandler::EvaluateBlack(
 		nThreads,
 		std::move(geomBrownMotionGenerator),
 		std::move(payoff),
-		statisticsGatherers
+		statisticsGatherersPerThread
 	};
 	// join until MC machinery stops
 	mcHandler.Run();
@@ -126,7 +126,7 @@ std::string PricerEndpointHandler::EvaluateBlack(
 	 */
 	std::vector<std::vector<double>> momentsPerThreadVec;
 	int idx = 1;
-	for (const auto& statGatherer : statisticsGatherers) {
+	for (const auto& statGatherer : statisticsGatherersPerThread) {
 		const auto& fullInfoTable = statGatherer->GetStatisticalInfo();
 
 		auto momentsInfoTable_it = std::find_if(

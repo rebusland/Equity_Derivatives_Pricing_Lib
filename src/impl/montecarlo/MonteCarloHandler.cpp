@@ -16,11 +16,11 @@ MonteCarloHandler::MonteCarloHandler(
 	unsigned int nThreads,
 	std::unique_ptr<StochasticPathGenerator> pathGenerator,
 	std::unique_ptr<Payoff> payoff,
-	std::vector<std::unique_ptr<StatisticsGatherer>>& statisticsGatherersRef
+	std::vector<std::unique_ptr<StatisticsGatherer>>& statisticsGatherersPerThreadRef
 ) : m_n_simulations{nSimulations}, m_n_threads{nThreads},
 	m_stochastic_path_generator(std::move(pathGenerator)),
 	m_payoff(std::move(payoff)),
-	m_statistics_gatherers(statisticsGatherersRef) {}
+	m_statistics_gatherers(statisticsGatherersPerThreadRef) {}
 
 void MonteCarloHandler::Run() const {
 

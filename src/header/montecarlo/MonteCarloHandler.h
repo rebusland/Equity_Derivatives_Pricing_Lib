@@ -15,7 +15,7 @@ class MonteCarloHandler {
 			unsigned int nThreads,
 			std::unique_ptr<StochasticPathGenerator> stochasticPathGenerator,
 			std::unique_ptr<Payoff> payoff,
-			std::vector<std::unique_ptr<StatisticsGatherer>>& statisticsGatherers
+			std::vector<std::unique_ptr<StatisticsGatherer>>& statisticsGatherersPerThread
 		);
 
 		// TODO should return the outputs (results + statistics) instead?
