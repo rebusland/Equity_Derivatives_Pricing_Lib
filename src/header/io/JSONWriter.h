@@ -5,18 +5,21 @@
 #define BASE_FILE_NAME "statResults"
 
 #include <fstream>
+#include <string>
 
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 
+#include "result/PricingResults.h"
+
 using _StatisticalInfo = std::pair<std::string, std::vector<double>>;
 using _StatisticalInfoTable = std::vector<_StatisticalInfo>;
 
 class JSONWriter {
 	public:
-		static void WriteResultsInfoTable(
+		static void WriteResultsInfoTableToFile(
 			const _StatisticalInfoTable& infoTable,
 			std::string additionalFileLabel=""
 		) {
@@ -39,11 +42,45 @@ class JSONWriter {
 			}
 
 			std::string fullFileName = OUTPUT_FOLDER "/" BASE_FILE_NAME + additionalFileLabel + ".json";
+			SerializeDocToFile(doc, fullFileName);
+		}
+
+		static std::string SerializePricingResultsToString(const PricingResults& results, bool shouldIndent = true) {
+			rapidjson::Document doc;
+			doc.SetObject();
+
+			doc.AddMember("fairPrice", results.m_fair_price, doc.GetAllocator());
+			doc.AddMember("monteCarloError", results.m_montecarlo_error, doc.GetAllocator());
+
+			rapidjson::Value momentsArray(rapidjson::kArrayType);
+			// a bit annoying..why can't I just assign the vector to the rapidjson array?
+			for (const double moment : results.m_moments) {
+				momentsArray.PushBack(moment, doc.GetAllocator());
+			}
+			doc.AddMember("moments", momentsArray, doc.GetAllocator());
+
+			return SerializeDocToString(doc, shouldIndent);
+		}
+
+	private:
+		static std::string SerializeDocToString(rapidjson::Document& doc, bool shouldIndent = true) {
+			rapidjson::StringBuffer buffer;
+			rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+			if (shouldIndent) {
+				writer.SetIndent('\t', 1); // indent using tabs
+			}
+			doc.Accept(writer);
+			return buffer.GetString();
+		}
+
+		static void SerializeDocToFile(rapidjson::Document& doc, const std::string& fullFileName, bool shouldIndent = true) {
 			std::ofstream ofs(fullFileName.c_str());
 			rapidjson::OStreamWrapper osw(ofs);
 
 			rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
-			writer.SetIndent('\t', 1); // indent using tabs
+			if (shouldIndent) {
+				writer.SetIndent('\t', 1); // indent using tabs
+			}
 			doc.Accept(writer);
 		}
 };

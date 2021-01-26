@@ -54,7 +54,7 @@ class StatisticsGatherer {
 			const _StatisticalInfoTable& infoTable, 
 			std::string additionalFileLabel=""
 		) {
-			 JSONWriter::WriteResultsInfoTable(infoTable, additionalFileLabel);
+			 JSONWriter::WriteResultsInfoTableToFile(infoTable, additionalFileLabel);
 		 }
 
 		virtual ~StatisticsGatherer(){}

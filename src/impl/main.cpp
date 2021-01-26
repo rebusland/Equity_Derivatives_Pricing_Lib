@@ -1,3 +1,4 @@
+#include <iostream>
 #include <string>
 
 #include "PricerEndpointHandler.h"
@@ -27,9 +28,10 @@ int main() {
 	std::string mcSettingsString = Utils::ReadJsonFileAsString("input/monteCarloSettings.json");
 	std::string productString = Utils::ReadJsonFileAsString("input/product.json");
 
-	PricerEndpointHandler::EvaluateBlack(
+	std::string results = PricerEndpointHandler::EvaluateBlack(
 		flatMktDataString,
 		mcSettingsString,
 		productString
 	);
+	std::cout << results << std::endl;
 }

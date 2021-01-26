@@ -5,7 +5,7 @@
 
 class PricerEndpointHandler {
 	public:
-		static void EvaluateBlack(
+		static std::string EvaluateBlack(
 			const std::string& flatMktDataJSONString,
 			const std::string& mcSettingsJSONString,
 			const std::string& productJSONString
