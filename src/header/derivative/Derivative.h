@@ -5,7 +5,10 @@
 
 #include "mkt-data/Underlying.h"
 
+#ifndef _DATE_DEF_
+#define _DATE_DEF_
 using _Date = long;
+#endif
 
 /**
  * TODO:

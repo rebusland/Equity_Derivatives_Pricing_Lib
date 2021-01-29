@@ -1,13 +1,10 @@
 #ifndef _STATISTICS_GATHERER_H_
 #define _STATISTICS_GATHERER_H_
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "io/JSONWriter.h"
 
 /**
  * A flexible way to return multiple statistical measures.
@@ -33,29 +30,12 @@ class StatisticsGatherer {
 		 */
 		virtual std::unique_ptr<StatisticsGatherer> clone() const = 0;
 
-		static void PrintStatisticalInfoTable(const _StatisticalInfoTable& infoTable) {
-			std::cout << "\n\n******* Statistics Info Table *******\n\n";
+		static void PrintStatisticalInfoTable(const _StatisticalInfoTable& infoTable);
 
-			for (const _StatisticalInfo& singleInfo : infoTable) {
-				// each singleInfo is printed on a row
-				std::cout << std::endl << singleInfo.first << ": ";
-				for (double statMeasure : singleInfo.second) {
-					std::cout << statMeasure << " ";
-				}
-			}
-			std::cout << "\n\n*************************************\n\n";
-		}
-
-		/**
-		 * TODO 
-		 *  add enum to determine where to dump the statistics table (JSON and/or Excel)?
-		 */
-		 static void DownloadStatisticalInfoTable(
+		static void DownloadStatisticalInfoTable(
 			const _StatisticalInfoTable& infoTable, 
 			std::string additionalFileLabel=""
-		) {
-			 JSONWriter::WriteResultsInfoTableToFile(infoTable, additionalFileLabel);
-		 }
+		);
 
 		virtual ~StatisticsGatherer(){}
 };

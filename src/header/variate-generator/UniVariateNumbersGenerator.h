@@ -28,6 +28,10 @@ class UniVariateNumbersGenerator : public Clonable<UniVariateNumbersGenerator> {
 			m_seed = seed;
 		}
 
+		virtual double GetSeed() const {
+			return m_seed;
+		}
+
 		/**
 		 * Returns a single number
 		 */

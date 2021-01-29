@@ -8,8 +8,6 @@
 #include "derivative/AsianOption.h"
 #include "util/Utils.h"
 
-using _Date = long;
-
 /**
  * TODO:
  * - How to handle fixed strike asian options without creating a different payoff class?

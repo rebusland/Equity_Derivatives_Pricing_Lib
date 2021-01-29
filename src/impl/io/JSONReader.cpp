@@ -45,13 +45,19 @@ MonteCarloSettings JSONReader::ReadMonteCarloSettings(const std::string& mcSetti
 		THROW_PROJECT_EXCEPTION("Invalid variate generator type: " + generatorLabel);
 	}
 
+	const auto& greeksSettingsJSON = doc["greeks"];
+	MonteCarloSettings::GreeksSettings greeksSettings{
+		greeksSettingsJSON["spot-relative-shift"].GetDouble()
+	};
+
 	return MonteCarloSettings{
 		generatorEnum,
 		doc["seed"].GetDouble(),
 		simulScheduler,
 		doc["nThreads"].GetUint(),
 		varianceReduction,
-		doc["nSimulations"].GetUint64()
+		doc["nSimulations"].GetUint64(),
+		greeksSettings
 	};
 }
 
@@ -153,7 +159,7 @@ void JSONReader::ParseString(rapidjson::Document& doc, const std::string& jsonSt
 	doc.Parse(jsonStr.c_str());
 
 	if (doc.HasParseError()) {
-		THROW_PROJECT_EXCEPTION("Error when parsing json string");
+		THROW_PROJECT_EXCEPTION("Error when parsing json string: " + jsonStr);
 	}
 }
 

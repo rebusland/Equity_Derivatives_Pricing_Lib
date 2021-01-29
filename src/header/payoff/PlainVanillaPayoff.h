@@ -12,8 +12,6 @@
 
 #include "util/Utils.h"
 
-using _Date = long;
-
 /**
  * European plain vanilla
  */

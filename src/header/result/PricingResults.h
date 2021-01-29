@@ -2,18 +2,40 @@
 #define _PRICING_RESULTS_H_
 
 #include <string>
-#include <vector>
+#include <valarray>
 
-#include "io/JSONWriter.h"
+#include "util/Utils.h"
 
 class PricingResults {
 	public:
-		PricingResults(double fairPrice, double mcError, std::vector<double> moments):
-			m_fair_price{fairPrice}, m_montecarlo_error{mcError}, m_moments{moments} {}
+		class SinglePriceGreekResult {
+			public:
+				SinglePriceGreekResult(
+					const std::valarray<double>& moments,
+					size_t nSimulations
+				) : m_moments{moments},
+					m_mid{moments[0]},
+					m_montecarlo_error{
+						Utils::GetStdDevOfMeanFromMoments(moments[0], moments[1], nSimulations)
+					} {}
 
-		double m_fair_price;
-		double m_montecarlo_error;
-		std::vector<double> m_moments;
+				std::valarray<double> m_moments;
+				double m_mid;
+				double m_montecarlo_error;
+		};
+
+		PricingResults(
+			const std::valarray<double>& priceMoments,
+			const std::valarray<double>& deltaMoments,
+			const std::valarray<double>& gammaMoments,
+			size_t nSimulations
+		) : m_price_result(priceMoments, nSimulations),
+			m_delta_result(deltaMoments, nSimulations),
+			m_gamma_result(gammaMoments, nSimulations) {}
+
+		SinglePriceGreekResult m_price_result;
+		SinglePriceGreekResult m_delta_result;
+		SinglePriceGreekResult m_gamma_result;
 };
 
 #endif

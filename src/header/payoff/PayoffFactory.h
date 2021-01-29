@@ -1,5 +1,5 @@
-#ifndef _PAYOFF_FUNCTIONAL_FACTORY_H_
-#define _PAYOFF_FUNCTIONAL_FACTORY_H_
+#ifndef _PAYOFF_FACTORY_H_
+#define _PAYOFF_FACTORY_H_
 
 #include <functional>
 #include <map>
@@ -18,7 +18,11 @@ namespace payoff_registration {
 	class PayoffRegisterHelper;
 }
 
+#ifndef _DATE_DEF_
+#define _DATE_DEF_
 using _Date = long;
+#endif
+
 using PayoffBuilderFunc = std::function<std::unique_ptr<Payoff> (Derivative*, const std::vector<double>&, std::string)>;
 
 class PayoffFactory : public Singleton<PayoffFactory> {

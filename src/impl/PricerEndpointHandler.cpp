@@ -23,10 +23,18 @@
 #include "statistics-gatherer/FullSampleGatherer.h"
 #include "statistics-gatherer/MomentsEvaluator.h"
 #include "statistics-gatherer/StatisticsGatherer.h"
+
+#include "statistics-gatherer/PricingResultsGatherer.h"
+
 #include "result/PricingResults.h"
 
+#include "util/Utils.h"
+
 // TODO use unsigned long instead?
+#ifndef _DATE_DEF_
+#define _DATE_DEF_
 using _Date = long;
+#endif
 
 // The evaluation date ("today")
 constexpr _Date VALUE_DATE = 0;
@@ -88,6 +96,7 @@ std::string PricerEndpointHandler::EvaluateBlack(
 	std::unique_ptr<StochasticPathGenerator> geomBrownMotionGenerator = std::make_unique<GBMPathGenerator>(
 		payoffObservations,
 		(derivativePtr->m_underlying).GetReferencePrice(),
+		mcSettings.m_greeks_settings.m_spot_relative_shift,
 		r, vola,
 		std::move(variateNumbersGenerator)
 	);
@@ -96,14 +105,14 @@ std::string PricerEndpointHandler::EvaluateBlack(
 	 * Statistics gatherers
 	 * TODO add settings to customize statistics gatherers and handle their construction
 	 */
-	std::unique_ptr<CompositeStatisticsGatherer> compositeStatGatherer(new CompositeStatisticsGatherer());
-	compositeStatGatherer
-		->AddChildStatGatherer(std::make_unique<MomentsEvaluator>(2));
-		// ->AddChildStatGatherer(std::make_unique<FullSampleGatherer>());
+	// two moments: for mean and std dev
+	// TODO: now hardcoded, this parameter should come from the outside world
+ 	const unsigned int nMoments = 2;
+	PricingResultsGatherer pricingResultsGatherer{nMoments};
 
-	std::vector<std::unique_ptr<StatisticsGatherer>> statisticsGatherersPerThread;
+	std::vector<std::unique_ptr<PricingResultsGatherer>> resultsGatherersPerThread;
 	for (unsigned int i = 0; i < nThreads; ++i) {
-		statisticsGatherersPerThread.push_back(compositeStatGatherer->clone());
+		resultsGatherersPerThread.push_back(pricingResultsGatherer.Clone());
 	}
 
 	/*
@@ -114,41 +123,21 @@ std::string PricerEndpointHandler::EvaluateBlack(
 		nThreads,
 		std::move(geomBrownMotionGenerator),
 		std::move(payoff),
-		statisticsGatherersPerThread
+		resultsGatherersPerThread
 	};
 	// join until MC machinery stops
 	mcHandler.Run();
 
 	/*
-	 * TODO the merging of info is implemented just for the MomentsEvaluator
-	 * TODO find a more structured way to merge the results coming from each thread
-	 * gather the results from each thread and merge them to get the complete statistical results
+	 * Merge results coming from each thread
 	 */
-	std::vector<std::vector<double>> momentsPerThreadVec;
-	int idx = 1;
-	for (const auto& statGatherer : statisticsGatherersPerThread) {
-		const auto& fullInfoTable = statGatherer->GetStatisticalInfo();
+	PricingResults results = Utils::ExtractPricingResultsFromGatherers(
+		resultsGatherersPerThread,
+		nThreads,
+		nMoments,
+		// divided by two, since two consecutive runs are already averaged in MonteCarloEngine
+		nMCSimulations / 2
+	);
 
-		auto momentsInfoTable_it = std::find_if(
-			fullInfoTable.cbegin(), fullInfoTable.cend(),
-			[](const auto& infoTable) {return (infoTable.first == MOMENTS_STRING);}
-		);
-		momentsPerThreadVec.push_back(std::move(momentsInfoTable_it->second));
-
-		// Print info table for each thread in a separate file
-		// TODO enable only if DEBUG mode is active (?)
-		StatisticsGatherer::DownloadStatisticalInfoTable(fullInfoTable, "_thread" + std::to_string(idx++));
-	}
-
-	_StatisticalInfoTable mergedMomentsTable = _StatisticalInfoTable(1, MomentsEvaluator::MergeMomentsInfo(momentsPerThreadVec));
-	const auto& moments = mergedMomentsTable[0].second;
-	const double fairPrice = moments[0];
-	const double M2 = moments[1];
-	// sigma/sqrt(n) = sqrt(M2 - M1^2) / sqrt(n) (NB: fairPrice == M1)
-	const double stdDevMean = std::sqrt((M2 - fairPrice * fairPrice) / (0.5 * nMCSimulations - 1));
-
-	const PricingResults result(fairPrice, stdDevMean, moments);
-
-	// Return results serialized in JSON format
-	return JSONWriter::SerializePricingResultsToString(result);
+	return JSONWriter::SerializePricingResultsToString(results);
 }

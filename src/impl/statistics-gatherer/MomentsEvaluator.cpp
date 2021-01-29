@@ -5,7 +5,7 @@
 #include "util/ProjectException.h"
 
 MomentsEvaluator::MomentsEvaluator(size_t nMoments) : 
-	m_rolling_moments{nMoments, RollingAverage{0.0, AvgType::ARITHMETIC}} {}
+	m_rolling_moments{nMoments, Utils::RollingAverage{0.0, AvgType::ARITHMETIC}} {}
 
 void MomentsEvaluator::AcquireResult(double simulationResult) {
 	double previous = 1;
@@ -34,7 +34,7 @@ std::vector<double> MomentsEvaluator::GetMomentsSoFar() const {
 	std::transform(
 		m_rolling_moments.begin(), m_rolling_moments.end(),
 		moments.begin(),
-		[](const RollingAverage& rollAvg){ return rollAvg.GetAverage(); }
+		[](const Utils::RollingAverage& rollAvg){ return rollAvg.GetAverage(); }
 	);
 
 	return moments;

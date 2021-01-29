@@ -5,12 +5,10 @@
 #include <vector>
 
 #include "MonteCarloSettings.h"
-#include "statistics-gatherer/StatisticsGatherer.h"
+#include "statistics-gatherer/PricingResultsGatherer.h"
 #include "path-generator/StochasticPathGenerator.h"
 
 #include "payoff/Payoff.h"
-
-using _Date = long;
 
 class MonteCarloEngine {
 	public:
@@ -18,35 +16,22 @@ class MonteCarloEngine {
 			const size_t nSimul,
 			std::unique_ptr<StochasticPathGenerator> stochasticPathGenerator,
 			std::unique_ptr<Payoff> payoff,
-			StatisticsGatherer* statisticsGatherer
-		) : m_n_simul{nSimul},
-		m_stochastic_path_generator{std::move(stochasticPathGenerator)},
-		m_payoff{std::move(payoff)},
-		m_statistics_gatherer{statisticsGatherer} {
-			// resize spot prices vector
-			m_spot_prices.resize(m_payoff->m_flattened_observation_dates.size());
-		}
+			PricingResultsGatherer* resultsGatherer
+		);
 
-		void operator() () {
-			for (size_t i = 0; i < m_n_simul / 2; ++i) {
-				// price estimeted in the current scenario
-				m_stochastic_path_generator->SimulateRelevantSpotPrices(m_spot_prices);
-				const double firstResult{(*m_payoff)(m_spot_prices)};
-
-				m_stochastic_path_generator->SimulateRelevantSpotPrices(m_spot_prices);
-				const double secondResult{(*m_payoff)(m_spot_prices)};
-
-				// taking the average of two consecutive simulations lowers variance if using the antithetic variate techniques
-				m_statistics_gatherer->AcquireResult((firstResult + secondResult)/2);
-			}
-		}
+		void operator() ();
 
 	private:
 		const size_t m_n_simul;
 		std::unique_ptr<StochasticPathGenerator> m_stochastic_path_generator;
 		std::unique_ptr<Payoff> m_payoff;
-		StatisticsGatherer* m_statistics_gatherer;
+		PricingResultsGatherer* m_results_gatherer;
+
+		// the absolute spot shift used to estimate delta and gamma
+		const double m_spot_shift;
 		std::vector<double> m_spot_prices;
+		std::vector<double> m_spot_prices_down;
+		std::vector<double> m_spot_prices_up;
 };
 
 #endif

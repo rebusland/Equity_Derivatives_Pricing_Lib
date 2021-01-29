@@ -1,10 +1,11 @@
+#ifndef _MOMENTS_EVALUATOR_H_
+#define _MOMENTS_EVALUATOR_H_
+
 #include "StatisticsGatherer.h"
 
 #include <vector>
 
 #include "util/Utils.h"
-
-using Utils::RollingAverage;
 
 #define MOMENTS_STRING "Moments"
 
@@ -30,5 +31,7 @@ class MomentsEvaluator : public StatisticsGatherer {
 		static _StatisticalInfo MergeMomentsInfo(const std::vector<std::vector<double>>& momentsInfoVec);
 
 	private:
-		std::vector<RollingAverage> m_rolling_moments;
+		std::vector<Utils::RollingAverage> m_rolling_moments;
 };
+
+#endif

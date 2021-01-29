@@ -21,19 +21,29 @@ enum class VariateGeneratorEnum {
 
 class MonteCarloSettings {
 	public:
+		class GreeksSettings {
+			public:
+				GreeksSettings(double spotRelativeShift) : 
+					m_spot_relative_shift{spotRelativeShift} {} 
+
+				double m_spot_relative_shift;
+		};
+
 		MonteCarloSettings(
 			VariateGeneratorEnum generatorType,
 			double seed,
 			const SimulationScheduler& simulationScheduler,
 			unsigned int nThreads,
 			const VarianceReduction& varianceReduction,
-			size_t numSimulations
+			size_t numSimulations,
+			const MonteCarloSettings::GreeksSettings& greeksSettings
 		) :	m_variate_generator_type{generatorType},
 			m_seed{seed},
 			m_simulation_scheduler{simulationScheduler},
 			m_n_threads{nThreads},
 			m_variance_reduction{varianceReduction},
-			m_num_simulations{numSimulations} {}
+			m_num_simulations{numSimulations},
+			m_greeks_settings{greeksSettings} {}
 
 		VariateGeneratorEnum m_variate_generator_type;
 		const double m_seed;
@@ -41,6 +51,7 @@ class MonteCarloSettings {
 		const unsigned int m_n_threads;
 		const VarianceReduction m_variance_reduction;
 		const size_t m_num_simulations;
+		const GreeksSettings m_greeks_settings;
 };
 
 #endif

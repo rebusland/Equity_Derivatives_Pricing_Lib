@@ -16,11 +16,11 @@ MonteCarloHandler::MonteCarloHandler(
 	unsigned int nThreads,
 	std::unique_ptr<StochasticPathGenerator> pathGenerator,
 	std::unique_ptr<Payoff> payoff,
-	std::vector<std::unique_ptr<StatisticsGatherer>>& statisticsGatherersPerThreadRef
+	std::vector<std::unique_ptr<PricingResultsGatherer>>& resultsGatherersPerThreadRef
 ) : m_n_simulations{nSimulations}, m_n_threads{nThreads},
 	m_stochastic_path_generator(std::move(pathGenerator)),
 	m_payoff(std::move(payoff)),
-	m_statistics_gatherers(statisticsGatherersPerThreadRef) {}
+	m_results_gatherers(resultsGatherersPerThreadRef) {}
 
 void MonteCarloHandler::Run() const {
 
@@ -32,18 +32,17 @@ void MonteCarloHandler::Run() const {
 	const size_t nSimulPerThread = m_n_simulations / m_n_threads;
 
 	std::vector<std::thread> thread_vec;
-	int thread_seed = 1;
-	for (const auto& statGatherer : m_statistics_gatherers) {
+	for (const auto& resultGatherer : m_results_gatherers) {
 		std::unique_ptr<StochasticPathGenerator> pathGenerator = m_stochastic_path_generator->Clone();
 
-		// TODO: find a cleaner and more reasoned way to set the seed in each thread
-		pathGenerator->SetVariateGeneratorSeed(thread_seed++);
+		// TODO: find a cleaner and more reasoned way to set a different seed in each thread
+		pathGenerator->IncrementVariateGeneratorSeed();
 
 		MonteCarloEngine mcEngine{
 			nSimulPerThread,
 			std::move(pathGenerator),
 			m_payoff->Clone(),
-			statGatherer.get()
+			resultGatherer.get()
 		};
 		thread_vec.emplace_back(std::move(mcEngine));
 	}

@@ -9,7 +9,10 @@
 // for placeholders 
 using namespace std::placeholders; 
 
+#ifndef _DATE_DEF_
+#define _DATE_DEF_
 using _Date = long;
+#endif
 
 /**
  * The first prototype of a discounter class.

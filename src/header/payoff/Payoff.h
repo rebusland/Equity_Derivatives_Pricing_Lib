@@ -1,11 +1,14 @@
-#ifndef _PATH_DEPENDENT_PAYOFF_H_
-#define _PATH_DEPENDENT_PAYOFF_H_
+#ifndef _PAYOFF_H_
+#define _PAYOFF_H_
 
 #include <vector>
 
 #include "util/pattern/Clonable.h"
 
+#ifndef _DATE_DEF_
+#define _DATE_DEF_
 using _Date = long;
+#endif
 
 /**
  * IMPORTANT:

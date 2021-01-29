@@ -13,13 +13,18 @@
 class GBMPathGenerator : public StochasticPathGenerator {
 	public:
 		GBMPathGenerator(
-			std::vector<_Date> observationDates, 
+			std::vector<_Date> observationDates,
 			double S0,
+			double S_relative_shift,
 			double r,
 			double vola,
 			std::unique_ptr<UniVariateNumbersGenerator> gaussianGen
-		) : StochasticPathGenerator(observationDates, std::move(gaussianGen)),
-			m_log_spot{std::log(S0)} {
+		) : StochasticPathGenerator(
+				observationDates,
+				S0,
+				S_relative_shift,
+				std::move(gaussianGen)
+			) {
 			// precompute as much as possible
 			m_drifts.resize(m_num_observations);
 			m_vola_widths.resize(m_num_observations);
@@ -33,13 +38,20 @@ class GBMPathGenerator : public StochasticPathGenerator {
 			}
 		}
 
-		void SimulateRelevantSpotPrices(std::vector<double>& spotPrices) override {
+		void SimulateRelevantSpotPrices(
+			std::vector<double>& spotPrices,
+			std::vector<double>& spotPricesDown,
+			std::vector<double>& spotPricesUp
+		) override {
 			m_variates = m_variates_generator->GenerateSequence();
 
-			double currentLogSpot = m_log_spot;
+			double expIncrement = 1.0;
+
 			for (unsigned int i = 0; i < m_num_observations; ++i) {
-				currentLogSpot += m_drifts[i] + m_vola_widths[i] * m_variates[i];
-				spotPrices[i] = std::exp(currentLogSpot);
+				expIncrement *= std::exp(m_drifts[i] + m_vola_widths[i] * m_variates[i]);
+				spotPrices[i] = m_S0 * expIncrement;
+				spotPricesDown[i] = m_S_down * expIncrement;
+				spotPricesUp[i] = m_S_up * expIncrement;
 			}
 		}
 
@@ -51,13 +63,16 @@ class GBMPathGenerator : public StochasticPathGenerator {
 	private:
 		// for the sole purpose of cloning
 		GBMPathGenerator(const GBMPathGenerator& pathGen) :
-			StochasticPathGenerator(pathGen.m_observation_dates, pathGen.m_variates_generator->Clone()),
-			m_log_spot{pathGen.m_log_spot},
+			StochasticPathGenerator(
+				pathGen.m_observation_dates,
+				pathGen.m_S0,
+				pathGen.GetSpotShift(),
+				pathGen.m_variates_generator->Clone()
+			),
 			m_drifts{pathGen.m_drifts},
 			m_vola_widths{pathGen.m_vola_widths} {} 
 
 	private:
-		const double m_log_spot;
 		std::vector<double> m_drifts;
 		std::vector<double> m_vola_widths;
 };
