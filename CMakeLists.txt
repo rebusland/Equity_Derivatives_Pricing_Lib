@@ -12,9 +12,19 @@ project(EQPricer)
 # search all .h and .cpp source files through regexp
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/impl/*.cpp)
 
-# PROJECT TARGET
-# specify the project's target name and the sources to be built from
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+# PROJECT TARGET (shared library)
+# specify the shared library's target name and the sources to be built from
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+
+include(GenerateExportHeader)
+# this automatically generates the export header SHARED_API.h
+GENERATE_EXPORT_HEADER(
+	${PROJECT_NAME}
+    BASE_NAME ${PROJECT_NAME}
+    EXPORT_MACRO_NAME SHARED_API
+    EXPORT_FILE_NAME ${CMAKE_SOURCE_DIR}/src/header/SHARED_API.h
+    STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC
+)
 
 # Add the given directories to those the compiler uses to search for include files,
 # when compiling the given target.
@@ -146,9 +156,6 @@ target_compile_options(
 	"$<$<BOOL:${_ENABLE_WARN}>:${_FLAGS_WARNING}>" # warning flags added only if requested
 )
 
-# allows to specify the location for the executable file
-#set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-
 # more diagnostic info
 message("System name: " ${CMAKE_SYSTEM_NAME})
 message("System version: " ${CMAKE_SYSTEM_VERSION})
@@ -172,5 +179,4 @@ get_target_property(project_include_dir ${PROJECT_NAME} INCLUDE_DIRECTORIES)
 message("Project's target include directories: ${project_include_dir}")
 message("CMake binary dir: " ${CMAKE_BINARY_DIR})
 message("CMake runtime output directory: " ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-message("CMake executable output path: " ${EXECUTABLE_OUTPUT_PATH})
 message("\n**************\n")
