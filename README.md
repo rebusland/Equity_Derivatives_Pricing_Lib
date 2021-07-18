@@ -1,4 +1,4 @@
-# Equity Pricer
+# Equity Derivatives Pricing Library
 A (hopefully) flexible, efficient and well-written *C++* implementation of an Equity derivatives pricer.  
 Currently, the pricing engine only supports MonteCarlo simulations, but the overall implementation was designed
 with the goal to provide, in the long run, a choice between three different pricing techniques: Montecarlo, Trees or analytical solutions/approximations (whenever possible).  
